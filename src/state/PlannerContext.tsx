@@ -1,20 +1,20 @@
-import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 import {
   createPoll as createPollApi,
   deletePoll as deletePollApi,
+  fetchLeagueFixtures,
   fetchPlayers,
   fetchPolls,
   updateAvailability as updateAvailabilityApi,
   updatePoll as updatePollApi,
 } from "../api/plannerApi";
-import { listLeagueFixtures } from "../data/matchDayRepository";
-import { MatchDay, Player } from "../domain/types";
+import { LeagueFixture, MatchDay, Player } from "../domain/types";
 import { useSession } from "../session/sessionStore";
 import { CreatePollInput, PlannerContext, UpdateAvailabilityInput, UpdatePollInput } from "./plannerStore";
 
 export function PlannerProvider({ children }: PropsWithChildren) {
   const session = useSession();
-  const leagueFixtures = useMemo(() => listLeagueFixtures(), []);
+  const [leagueFixtures, setLeagueFixtures] = useState<LeagueFixture[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [matchDays, setMatchDays] = useState<MatchDay[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,7 @@ export function PlannerProvider({ children }: PropsWithChildren) {
     if (!session.isAuthenticated || !session.selectedPlayerId) {
       setPlayers([]);
       setMatchDays([]);
+      setLeagueFixtures([]);
       return;
     }
 
@@ -31,9 +32,14 @@ export function PlannerProvider({ children }: PropsWithChildren) {
     setError(null);
 
     try {
-      const [nextPlayers, nextMatchDays] = await Promise.all([fetchPlayers(), fetchPolls()]);
+      const [nextPlayers, nextMatchDays, nextFixtures] = await Promise.all([
+        fetchPlayers(),
+        fetchPolls(),
+        fetchLeagueFixtures(),
+      ]);
       setPlayers(nextPlayers);
       setMatchDays(sortMatchDays(nextMatchDays));
+      setLeagueFixtures(nextFixtures);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Daten konnten nicht geladen werden.");
     } finally {

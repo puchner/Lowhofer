@@ -1,4 +1,5 @@
-import { AvailabilityStatus, MatchAvailability, MatchDay, Player, Position } from "../domain/types";
+import { LeagueStanding } from "../domain/leagueTypes";
+import { AvailabilityStatus, LeagueFixture, MatchAvailability, MatchDay, Player, Position } from "../domain/types";
 import type { CreatePollInput, UpdatePollInput } from "../state/plannerStore";
 
 interface ApiPlayer {
@@ -87,6 +88,41 @@ async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
   }
 
   return (await response.json()) as T;
+}
+
+export interface LeagueTableResult {
+  standings: LeagueStanding[];
+  lastChange: string;
+  fetchedAt: string;
+  expiresAt: string | null;
+  isStale: boolean;
+}
+
+export interface LeagueSourceSettings {
+  leagueBaseUrl: string | null;
+  leagueTableUrl: string | null;
+  leagueFixturesUrl: string | null;
+}
+
+export async function fetchLeagueTable(): Promise<LeagueTableResult> {
+  return requestJson<LeagueTableResult>("/api/league/table");
+}
+
+export async function fetchLeagueFixtures(): Promise<LeagueFixture[]> {
+  const body = await requestJson<{ fixtures: LeagueFixture[] }>("/api/league/fixtures");
+
+  return body.fixtures;
+}
+
+export async function fetchLeagueSource(): Promise<LeagueSourceSettings> {
+  return requestJson<LeagueSourceSettings>("/api/team-settings/league-source");
+}
+
+export async function updateLeagueSource(leagueBaseUrl: string): Promise<LeagueSourceSettings> {
+  return requestJson<LeagueSourceSettings>("/api/team-settings/league-source", {
+    method: "PATCH",
+    body: JSON.stringify({ leagueBaseUrl }),
+  });
 }
 
 function mapApiPlayer(player: ApiPlayer): Player {

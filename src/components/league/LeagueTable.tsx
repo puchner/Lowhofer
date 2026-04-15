@@ -4,11 +4,17 @@ import { LeagueStanding } from "../../domain/leagueTypes";
 
 interface LeagueTableProps {
   standings: LeagueStanding[];
-  sourceLastChange: string;
+  fetchedAt: string;
+  isStale: boolean;
 }
 
-export function LeagueTable({ sourceLastChange, standings }: LeagueTableProps) {
+export function LeagueTable({ fetchedAt, isStale, standings }: LeagueTableProps) {
   const sortedStandings = sortStandings(standings);
+  const fetchedDate = new Date(fetchedAt).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   return (
     <section className="rounded-lg border border-primary/15 bg-base-100 p-3 shadow-sm sm:p-4">
@@ -17,7 +23,10 @@ export function LeagueTable({ sourceLastChange, standings }: LeagueTableProps) {
           <p className="text-xs font-semibold uppercase text-primary sm:text-sm">Liga</p>
           <h3 className="text-xl font-bold text-petrol-900 sm:text-2xl">Tabelle</h3>
         </div>
-        <p className="text-sm text-base-content/60">Quelle: volleyball-freizeit.de, Stand {sourceLastChange}</p>
+        <p className="text-sm text-base-content/60">
+          Quelle: volleyball-freizeit.de, Stand {fetchedDate}
+          {isStale && " · Verbandsdaten aktuell nicht erreichbar"}
+        </p>
       </div>
 
       <div className="mt-4 space-y-2 sm:hidden">

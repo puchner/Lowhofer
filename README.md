@@ -94,23 +94,45 @@ Nach einem lokalen Pages-Start oder Deployment kann der Functions-Einstieg hier 
 
 Der Endpunkt zeigt nur, ob erforderliche Secrets konfiguriert sind. Secret-Werte werden nicht ausgegeben.
 
-## Liga-Daten aktualisieren
+## Liga-Daten
 
-Die bisherige lokale Importfunktion schreibt die Tabelle und Fixtures aus dem XML-Export der Liga in generierte JSON-Dateien.
+Liga-Tabelle und Fixtures werden serverseitig ueber `/api/league/*` geladen und 15 Minuten in Supabase gecacht.
+
+- `GET /api/league/table` – Tabelle (gecacht, Fallback auf letzten gueltigen Stand)
+- `GET /api/league/fixtures` – Lowhofer-Fixture-Liste (gecacht, nur zukuenftige Spiele)
+- `GET /api/team-settings/league-source` – aktuelle Liga-Basis-URL (nur authentifiziert)
+- `PATCH /api/team-settings/league-source` – Liga-Quelle aendern (nur Admin)
+
+### Liga-Quelle aendern
+
+Ein Admin kann auf der Tabellen-Seite ganz unten die Basis-URL der Liga-Seite eingeben:
+
+```text
+https://www.volleyball-freizeit.de/saison/1083
+```
+
+Die konkreten XML-Abruf-URLs fuer Tabelle und Spielplan werden automatisch abgeleitet. Der Cache wird bei jeder Aenderung automatisch geleert.
+
+### Lokaler Daten-Import (Legacy)
+
+Der lokale Import-Befehl schreibt weiterhin Snapshot-Dateien fuer Offline-Entwicklung:
 
 ```bash
 npm run import:league
-npm run build
 ```
 
-In einem spaeteren Paket wird diese Logik in wiederverwendbare Parser ueberfuehrt und serverseitig ueber `/api/league/*` mit 15-Minuten-Cache angebunden.
+Fuer den Produktivbetrieb ist dieser Schritt nicht mehr noetig – die App laedt alle Liga-Daten serverseitig.
 
 ## Struktur
 
 ```text
 functions/             Cloudflare Pages Functions
   api/                 API-Endpunkte als /api/*
+    league/            Liga-Tabelle und Fixtures (gecacht)
+    team-settings/     Team-Konfiguration (Admin)
   _shared/             Serverseitige Hilfsfunktionen
+    leagueParser.ts    XML-Parser fuer Tabelle und Spielplan
+    leagueSource.ts    URL-Ableitung aus Liga-Basis-URL
 
 supabase/
   migrations/          SQL-Migrationen fuer Supabase

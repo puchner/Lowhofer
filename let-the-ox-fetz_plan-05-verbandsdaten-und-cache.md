@@ -80,6 +80,18 @@ Verhalten:
 - betroffene `league_cache`-Einträge für `table` und `fixtures` invalidieren oder löschen
 - aktualisierte Quelle zurückgeben
 
+### Admin-UI für Quellenpflege
+
+Das Admin-Formular zur Pflege der Liga-Quelle erscheint **ganz unten auf der Tabellen-Seite (`/table`)**, nur sichtbar wenn der aktive Session-Spieler Admin ist.
+
+Das Eingabefeld für die Basis-URL soll immer die **aktuell gespeicherte Basis-URL** als vorausgefüllten Wert enthalten, damit der Admin sofort sieht, welche Seite aktuell hinterlegt ist, und gezielt nur ändert was nötig ist.
+
+Zusätzlich soll der Header der App einen **externen Link zur aktuellen Liga-Seite** enthalten – sichtbar für alle eingeloggten Nutzer, nicht nur für Admins.
+- Beschriftung: kurzer Name, z. B. „Liga" oder „Verband"
+- Symbol: externes Link-Icon (Viereck mit Pfeil, z. B. `↗` oder das übliche `ExternalLink`-Icon aus der verwendeten Icon-Bibliothek)
+- Ziel: `team_settings.league_base_url` (oder Fallback auf die bekannte Basis-URL falls noch keine gespeichert ist)
+- Link öffnet in neuem Tab
+
 ## API-Endpunkte
 
 ### `GET /api/league/table`
@@ -136,10 +148,12 @@ Wenn der Verband nicht erreichbar ist:
 - nicht einfach komplett leer rendern
 
 ## Deliverables
-- serverseitige League-API
-- 15-Minuten-Cache
-- Fallback auf letzten gültigen Stand
-- produktive Anbindung an Tabelle und Fixture-Auswahl
+- [x] serverseitige League-API (`/api/league/table`, `/api/league/fixtures`)
+- [x] 15-Minuten-Cache in Supabase `league_cache`
+- [x] Fallback auf letzten gültigen Stand bei Verbandsfehler
+- [x] produktive Anbindung an Tabellen-Seite und Fixture-Auswahl (Poll-Anlage)
+- [x] Admin-Formular ganz unten auf `/table` mit vorausgefüllter aktueller Basis-URL
+- [x] Header-Link zur Liga-Seite mit externem Link-Icon
 
 ## Hinweise für den Agent
 - keinen unnötigen Paid-Cloudflare-Speicher einplanen

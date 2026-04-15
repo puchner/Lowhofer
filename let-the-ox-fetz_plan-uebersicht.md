@@ -43,7 +43,7 @@ Sie ersetzt den bisherigen Einzelplan durch mehrere thematisch getrennte Pläne.
 
 5. `05-verbandsdaten-und-cache.md`
    - XML-Abruf, Parser, 15-Minuten-Cache, Fallback auf letzten gültigen Stand
-   - Status: offen
+   - Status: erledigt
 
 6. `06-tests-polish-und-definition-of-done.md`
    - Testsetup, Qualitätssicherung, Refactoring-Restarbeiten, Abschlusskriterien

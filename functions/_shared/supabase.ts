@@ -147,6 +147,82 @@ export async function upsertResponse(
   return rows[0];
 }
 
+export interface TeamLeagueSettings {
+  league_base_url: string | null;
+  league_table_url: string | null;
+  league_fixtures_url: string | null;
+}
+
+export async function getTeamLeagueSettings(env: CloudflareEnv): Promise<TeamLeagueSettings | null> {
+  const rows = await supabaseFetch<TeamLeagueSettings[]>(
+    env,
+    "/team_settings?select=league_base_url,league_table_url,league_fixtures_url&limit=1",
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function updateTeamLeagueSource(
+  env: CloudflareEnv,
+  baseUrl: string,
+  tableUrl: string,
+  fixturesUrl: string,
+): Promise<void> {
+  await supabaseFetch<void>(env, "/team_settings", {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      league_base_url: baseUrl,
+      league_table_url: tableUrl,
+      league_fixtures_url: fixturesUrl,
+      updated_at: new Date().toISOString(),
+    }),
+  });
+}
+
+export interface LeagueCacheRow {
+  cache_key: string;
+  payload_json: unknown;
+  fetched_at: string;
+  expires_at: string;
+  source_url: string;
+}
+
+export async function getLeagueCache(env: CloudflareEnv, key: "table" | "fixtures"): Promise<LeagueCacheRow | null> {
+  const rows = await supabaseFetch<LeagueCacheRow[]>(env, `/league_cache?cache_key=eq.${key}&limit=1`);
+
+  return rows[0] ?? null;
+}
+
+export async function setLeagueCache(
+  env: CloudflareEnv,
+  key: "table" | "fixtures",
+  payload: unknown,
+  sourceUrl: string,
+): Promise<void> {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 15 * 60 * 1000);
+
+  await supabaseFetch<void>(env, "/league_cache?on_conflict=cache_key", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify({
+      cache_key: key,
+      payload_json: payload,
+      fetched_at: now.toISOString(),
+      expires_at: expiresAt.toISOString(),
+      source_url: sourceUrl,
+    }),
+  });
+}
+
+export async function invalidateLeagueCache(env: CloudflareEnv): Promise<void> {
+  await supabaseFetch<void>(env, "/league_cache?cache_key=in.(table,fixtures)", { method: "DELETE" });
+}
+
 export async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: RequestInit = {}): Promise<T> {
   const supabaseUrl = getRequiredEnv(env, "SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = getRequiredEnv(env, "SUPABASE_SERVICE_ROLE_KEY");
