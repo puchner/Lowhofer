@@ -1,9 +1,11 @@
+import { Eye, EyeOff } from "lucide-react";
 import { FormEvent, PropsWithChildren, useMemo, useState } from "react";
 import { useSession } from "./sessionStore";
 
 export function SessionGate({ children }: PropsWithChildren) {
   const session = useSession();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState(() => {
     return window.localStorage.getItem("lowhofer.lastSelectedPlayerId") ?? "";
   });
@@ -52,13 +54,29 @@ export function SessionGate({ children }: PropsWithChildren) {
               </option>
             ))}
           </select>
-          <input
-            className="input input-bordered min-h-12 w-full rounded-lg"
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Team-Passwort"
-            type="password"
-            value={password}
-          />
+          <div className="relative">
+            <input
+              className="input input-bordered min-h-12 w-full rounded-lg pr-12"
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Team-Passwort"
+              type={showPassword ? "text" : "password"}
+              value={password}
+            />
+            <button
+              aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
+              className="absolute right-0 top-0 flex h-12 w-12 items-center justify-center text-base-content/50 hover:text-base-content"
+              onClick={() => setShowPassword(!showPassword)}
+              tabIndex={-1}
+              title={showPassword ? "Verbergen" : "Anzeigen"}
+              type="button"
+            >
+              {showPassword ? (
+                <EyeOff aria-hidden="true" className="h-5 w-5" />
+              ) : (
+                <Eye aria-hidden="true" className="h-5 w-5" />
+              )}
+            </button>
+          </div>
           {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
           <button
             className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900"
