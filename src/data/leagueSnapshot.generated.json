@@ -1,0 +1,86 @@
+{
+  "sourceUrl": "https://www.volleyball-freizeit.de/sprung_tabelle?i=1083&xml=1",
+  "lastChange": "13.04.2026",
+  "standings": [
+    {
+      "team": "To The Top!",
+      "points": 21,
+      "wins": 10,
+      "setsWon": 21,
+      "setsLost": 4,
+      "ballsWon": 612,
+      "ballsLost": 493,
+      "games": 11
+    },
+    {
+      "team": "Blockbusters",
+      "points": 21,
+      "wins": 8,
+      "setsWon": 21,
+      "setsLost": 15,
+      "ballsWon": 807,
+      "ballsLost": 770,
+      "games": 14
+    },
+    {
+      "team": "BavUA",
+      "points": 18,
+      "wins": 8,
+      "setsWon": 18,
+      "setsLost": 16,
+      "ballsWon": 796,
+      "ballsLost": 748,
+      "games": 13
+    },
+    {
+      "team": "Forza Ragazzi",
+      "points": 16,
+      "wins": 7,
+      "setsWon": 16,
+      "setsLost": 10,
+      "ballsWon": 605,
+      "ballsLost": 558,
+      "games": 10
+    },
+    {
+      "team": "ESV Freimann",
+      "points": 11,
+      "wins": 4,
+      "setsWon": 11,
+      "setsLost": 13,
+      "ballsWon": 537,
+      "ballsLost": 548,
+      "games": 10
+    },
+    {
+      "team": "Die lowhofer",
+      "points": 10,
+      "wins": 4,
+      "setsWon": 10,
+      "setsLost": 15,
+      "ballsWon": 542,
+      "ballsLost": 580,
+      "games": 11
+    },
+    {
+      "team": "FIX WIE NIX",
+      "points": 9,
+      "wins": 3,
+      "setsWon": 9,
+      "setsLost": 24,
+      "ballsWon": 670,
+      "ballsLost": 813,
+      "games": 14
+    },
+    {
+      "team": "Loud'n'Proud",
+      "points": 8,
+      "wins": 3,
+      "setsWon": 8,
+      "setsLost": 17,
+      "ballsWon": 524,
+      "ballsLost": 583,
+      "games": 11
+    }
+  ]
+}

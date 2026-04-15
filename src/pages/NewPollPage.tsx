@@ -1,0 +1,144 @@
+import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { PollType } from "../domain/types";
+import { usePlanner } from "../state/plannerStore";
+
+const todayKey = new Date().toISOString().slice(0, 10);
+
+export function NewPollPage() {
+  const navigate = useNavigate();
+  const { createPoll, leagueFixtures, matchDays } = usePlanner();
+  const [title, setTitle] = useState("");
+  const [opponent, setOpponent] = useState("");
+  const [date, setDate] = useState(todayKey);
+  const [time, setTime] = useState("");
+  const [type, setType] = useState<PollType>("date-finding");
+  const [homeAway, setHomeAway] = useState<"home" | "away" | "unknown">("unknown");
+  const existingFixtureIds = new Set(matchDays.map((matchDay) => matchDay.sourceFixtureId).filter(Boolean));
+
+  function createFromFixture(fixtureId: string) {
+    const fixture = leagueFixtures.find((item) => item.id === fixtureId);
+
+    if (!fixture?.date) {
+      return;
+    }
+
+    createPoll({
+      title: fixture.opponent,
+      type: "match",
+      date: fixture.date,
+      time: fixture.time,
+      opponent: fixture.opponent,
+      homeAway: fixture.homeAway,
+      sourceFixtureId: fixture.id,
+    });
+    navigate("/admin");
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    createPoll({
+      title: title.trim() || opponent.trim(),
+      type,
+      date,
+      time: time || undefined,
+      opponent: opponent.trim() || "Offen",
+      homeAway,
+    });
+    navigate("/admin");
+  }
+
+  return (
+    <section className="space-y-4 sm:space-y-5">
+      <div>
+        <p className="text-xs font-semibold uppercase text-primary sm:text-sm">Neu</p>
+        <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Abstimmung anlegen</h2>
+      </div>
+
+      <section className="rounded-lg border border-primary/15 bg-base-100 p-3 shadow-sm sm:p-4">
+        <h3 className="text-lg font-bold text-petrol-900">Aus Liga-Spielplan</h3>
+        <div className="mt-3 grid gap-2">
+          {leagueFixtures.map((fixture) => {
+            const alreadyExists = existingFixtureIds.has(fixture.id);
+            const canCreate = Boolean(fixture.date) && !alreadyExists;
+
+            return (
+              <article className="rounded-lg border border-base-300 p-3" key={fixture.id}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-bold text-petrol-900">{fixture.opponent}</p>
+                    <p className="text-sm text-base-content/70">
+                      {fixture.date ?? "Termin offen"} {fixture.time ? `um ${fixture.time}` : ""} ·{" "}
+                      {fixture.homeAway === "home" ? "Heimspiel" : "Auswärts"}
+                    </p>
+                  </div>
+                  <button
+                    className="btn btn-primary min-h-11 rounded-lg"
+                    disabled={!canCreate}
+                    onClick={() => createFromFixture(fixture.id)}
+                    type="button"
+                  >
+                    {alreadyExists ? "Schon angelegt" : fixture.date ? "Anlegen" : "Datum fehlt"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+
+      <form className="space-y-3 rounded-lg border border-primary/15 bg-base-100 p-3 shadow-sm sm:p-4" onSubmit={handleSubmit}>
+        <h3 className="text-lg font-bold text-petrol-900">Benutzerdefiniert</h3>
+        <select
+          className="select select-bordered min-h-11 w-full rounded-lg"
+          onChange={(event) => setType(event.target.value as PollType)}
+          value={type}
+        >
+          <option value="date-finding">Terminabstimmung</option>
+          <option value="match">Match</option>
+        </select>
+        <input
+          className="input input-bordered min-h-11 w-full rounded-lg"
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="Titel"
+          value={title}
+        />
+        <input
+          className="input input-bordered min-h-11 w-full rounded-lg"
+          onChange={(event) => setOpponent(event.target.value)}
+          placeholder="Gegner oder Anlass"
+          required
+          value={opponent}
+        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            className="input input-bordered min-h-11 w-full rounded-lg"
+            onChange={(event) => setDate(event.target.value)}
+            required
+            type="date"
+            value={date}
+          />
+          <input
+            className="input input-bordered min-h-11 w-full rounded-lg"
+            onChange={(event) => setTime(event.target.value)}
+            type="time"
+            value={time}
+          />
+        </div>
+        <select
+          className="select select-bordered min-h-11 w-full rounded-lg"
+          onChange={(event) => setHomeAway(event.target.value as "home" | "away" | "unknown")}
+          value={homeAway}
+        >
+          <option value="unknown">Ort offen</option>
+          <option value="home">Heimspiel</option>
+          <option value="away">Auswärts</option>
+        </select>
+        <button className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900" type="submit">
+          Abstimmung anlegen
+        </button>
+      </form>
+    </section>
+  );
+}
