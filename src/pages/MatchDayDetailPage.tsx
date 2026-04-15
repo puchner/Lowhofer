@@ -77,13 +77,38 @@ export function MatchDayDetailPage() {
               <StatusPill status={group.status} />
               <span className="text-sm font-bold text-base-content/60">{group.rows.length}</span>
             </div>
-            <div className="mt-3 flex flex-wrap gap-1.5">
+            <div className="mt-3 space-y-2">
               {group.rows.length > 0 ? (
-                group.rows.map(({ player }) => (
-                  <span className="rounded-lg bg-base-200 px-2 py-1 text-sm font-semibold text-petrol-900" key={player.id}>
-                    {player.name}
-                  </span>
-                ))
+                <>
+                  {/* Spieler ohne Notiz: Kompakte Anzeige */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.rows
+                      .filter((row) => !row.availability?.comment?.trim())
+                      .map(({ player }) => (
+                        <span
+                          className="rounded-lg bg-base-200 px-2 py-1 text-sm font-semibold text-petrol-900"
+                          key={player.id}
+                        >
+                          {player.name}
+                        </span>
+                      ))}
+                  </div>
+
+                  {/* Spieler mit Notiz: Jeweils eine Zeile */}
+                  <div className="space-y-1.5">
+                    {group.rows
+                      .filter((row) => row.availability?.comment?.trim())
+                      .map(({ player, availability }) => (
+                        <div
+                          className="flex flex-wrap items-baseline gap-x-1.5 rounded-lg bg-base-200 px-2 py-1.5 text-sm"
+                          key={player.id}
+                        >
+                          <span className="font-bold text-petrol-900">{player.name}</span>
+                          <span className="italic text-base-content/70">{availability?.comment}</span>
+                        </div>
+                      ))}
+                  </div>
+                </>
               ) : (
                 <span className="text-sm text-base-content/50">Niemand</span>
               )}
