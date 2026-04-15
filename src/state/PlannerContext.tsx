@@ -32,19 +32,19 @@ export function PlannerProvider({ children }: PropsWithChildren) {
     setError(null);
 
     try {
-      const [nextPlayers, nextMatchDays, nextFixtures] = await Promise.all([
-        fetchPlayers(),
-        fetchPolls(),
-        fetchLeagueFixtures(),
-      ]);
+      const [nextPlayers, nextMatchDays] = await Promise.all([fetchPlayers(), fetchPolls()]);
       setPlayers(nextPlayers);
       setMatchDays(sortMatchDays(nextMatchDays));
-      setLeagueFixtures(nextFixtures);
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "Daten konnten nicht geladen werden.");
     } finally {
       setIsLoading(false);
     }
+
+    // Fixtures separat laden – ein Fehler hier soll Spieltage nicht blockieren
+    fetchLeagueFixtures()
+      .then(setLeagueFixtures)
+      .catch(() => setLeagueFixtures([]));
   }, [session.isAuthenticated, session.selectedPlayerId]);
 
   useEffect(() => {

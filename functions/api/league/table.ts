@@ -2,7 +2,7 @@ import { requireSelectedPlayer } from "../../_shared/auth";
 import { CloudflareEnv } from "../../_shared/env";
 import { jsonResponse } from "../../_shared/http";
 import { parseLeagueTable } from "../../_shared/leagueParser";
-import { getLeagueCache, getTeamLeagueSettings, setLeagueCache } from "../../_shared/supabase";
+import { getLeagueCache, getTeamLeagueXmlUrls, setLeagueCache } from "../../_shared/supabase";
 
 const FALLBACK_TABLE_URL = "https://www.volleyball-freizeit.de/sprung_tabelle?i=1083&xml=1";
 
@@ -25,7 +25,7 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
     });
   }
 
-  const settings = await getTeamLeagueSettings(env);
+  const settings = await getTeamLeagueXmlUrls(env);
   const tableUrl = settings?.league_table_url ?? FALLBACK_TABLE_URL;
 
   try {

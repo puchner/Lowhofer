@@ -147,12 +147,26 @@ export async function upsertResponse(
   return rows[0];
 }
 
-export interface TeamLeagueSettings {
-  league_base_url: string | null;
+export interface TeamLeagueXmlUrls {
   league_table_url: string | null;
   league_fixtures_url: string | null;
 }
 
+export interface TeamLeagueSettings extends TeamLeagueXmlUrls {
+  league_base_url: string | null;
+}
+
+/** Nur die XML-Abruf-URLs – funktioniert auch ohne die league_base_url-Migration. */
+export async function getTeamLeagueXmlUrls(env: CloudflareEnv): Promise<TeamLeagueXmlUrls | null> {
+  const rows = await supabaseFetch<TeamLeagueXmlUrls[]>(
+    env,
+    "/team_settings?select=league_table_url,league_fixtures_url&limit=1",
+  );
+
+  return rows[0] ?? null;
+}
+
+/** Vollständige Liga-Einstellungen inkl. Basis-URL – erfordert die Migration aus Paket 5. */
 export async function getTeamLeagueSettings(env: CloudflareEnv): Promise<TeamLeagueSettings | null> {
   const rows = await supabaseFetch<TeamLeagueSettings[]>(
     env,

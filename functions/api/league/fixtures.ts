@@ -2,7 +2,7 @@ import { requireSelectedPlayer } from "../../_shared/auth";
 import { CloudflareEnv } from "../../_shared/env";
 import { jsonResponse } from "../../_shared/http";
 import { parseLowhoferFixtures } from "../../_shared/leagueParser";
-import { getLeagueCache, getTeamLeagueSettings, setLeagueCache } from "../../_shared/supabase";
+import { getLeagueCache, getTeamLeagueXmlUrls, setLeagueCache } from "../../_shared/supabase";
 
 const FALLBACK_FIXTURES_URL = "https://www.volleyball-freizeit.de/sprung_spielplan?i=1083&xml=1";
 
@@ -25,7 +25,7 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
     });
   }
 
-  const settings = await getTeamLeagueSettings(env);
+  const settings = await getTeamLeagueXmlUrls(env);
   const fixturesUrl = settings?.league_fixtures_url ?? FALLBACK_FIXTURES_URL;
 
   try {
