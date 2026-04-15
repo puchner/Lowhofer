@@ -25,11 +25,11 @@ Aktueller Stand:
   - Spieler und Positionen aus den bisherigen Mock-Daten
   - bestehende Polls und Responses aus den Mock-Daten
   - initiale Team-Settings inklusive Liga-URLs
+  - Pia und Volker als initiale Admin-Spieler
 
 Vor produktiver Nutzung muessen fachlich bestaetigt werden:
 
 - Spielerliste
-- Admin-Spieler (`players.is_admin`)
 - Team-Passwort-Hash (`team_settings.team_password_hash`)
 - Liga-URLs in `team_settings`
 
@@ -46,3 +46,18 @@ Die Cloudflare-Secrets fuer die spaetere API-Anbindung sind:
 - `SUPABASE_SERVICE_ROLE_KEY`
 
 Der Service-Role-Key darf nur serverseitig in Cloudflare Pages Functions verwendet werden.
+
+## Passwort-Hash
+
+Der Passwort-Hash kann nach Paket 3 lokal erzeugt werden:
+
+```bash
+npm run hash:password -- "DEIN_TEAM_PASSWORT"
+```
+
+Dann entweder vor dem Seed den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder nach dem Seed per SQL aktualisieren:
+
+```sql
+update public.team_settings
+set team_password_hash = 'DEIN_GENERIERTER_HASH';
+```

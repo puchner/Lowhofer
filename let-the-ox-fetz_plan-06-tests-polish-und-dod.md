@@ -54,6 +54,12 @@ Bereits durch Paket 2 erledigt:
 - zentrale DB-/Frontend-Mapper in `src/data/supabaseMappers.ts` ergänzt
 - README und Setup-Dokumentation um Supabase-Schritte erweitert
 
+Bereits durch Paket 3 erledigt:
+- Team-Passwort-Gate, Session-Endpunkte und Spielerwahl ergänzt
+- stateless signiertes httpOnly-Cookie für `selectedPlayerId` umgesetzt
+- Passwort-Hash-Script `npm run hash:password` ergänzt
+- Pia und Volker als initiale Admins im Seed gesetzt
+
 ### Mittel
 - `MatchDay` schrittweise in `AvailabilityPoll` überführen
 - Detailseite mobile-first verbessern

@@ -35,7 +35,7 @@ Sie ersetzt den bisherigen Einzelplan durch mehrere thematisch getrennte Pläne.
 
 3. `03-session-und-zugang.md`
    - Team-Passwort, Session, Spielerwahl, serverseitige Speicherung des aktiven Spielers
-   - Status: offen
+   - Status: im Repo umgesetzt; Seed-Ausführung, Passwort-Hash und Cloudflare-Secrets stehen noch extern aus
 
 4. `04-api-und-frontend-migration.md`
    - API-Endpunkte, Umstellung der bestehenden App von LocalStorage auf API
@@ -75,7 +75,7 @@ Diese Punkte kann der Agent vorbereiten oder dokumentieren, aber nicht vollstän
 - Supabase-Projekt anlegen und Projektwerte aus dem Dashboard entnehmen
 - Cloudflare-Secrets setzen, insbesondere `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` und `SESSION_SECRET`
 - Team-Passwort festlegen und den initialen Passwort-Hash bzw. Seed freigeben
-- initiale Spielerliste und Admin-Spieler fachlich bestätigen
+- initiale Spielerliste ist bestätigt; Pia und Volker sind im Seed Admins
 - SQL-Migration `supabase/migrations/202604150001_create_core_schema.sql` und Seed `supabase/seeds/001_initial_lowhofer_data.sql` im Supabase-Projekt ausführen oder einen Migrationsworkflow verbinden
 - ersten produktiven Cloudflare-Deploy auslösen und in Cloudflare/Supabase-Dashboards prüfen
 - finalen Link ans Team verteilen
@@ -84,7 +84,7 @@ Diese Punkte kann der Agent vorbereiten oder dokumentieren, aber nicht vollstän
 
 1. Cloudflare-Umstellung: erledigt
 2. Supabase-Datenmodell + Migrationen + Seeds: im Repo erledigt; extern noch Supabase ausführen und Seed fachlich freigeben
-3. Session-/Passwort-Gate + Spielerwahl in Session
+3. Session-/Passwort-Gate + Spielerwahl in Session: im Repo erledigt; extern noch Passwort-Hash, Seed und Secrets finalisieren
 4. Polls/Responses/Spieler auf API umstellen
 5. Verbandsdaten-API + Cache
 6. Tests, Doku, Rest-Refactorings

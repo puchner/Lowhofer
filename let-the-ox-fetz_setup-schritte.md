@@ -72,9 +72,22 @@ Du musst entscheiden oder einpflegen:
 - Spielerliste
 - welcher Spieler Admin ist
 
-Die initialen Mock-Daten sind als Seed vorbereitet, aber du musst die Inhalte fachlich freigeben.
+Die initialen Mock-Daten sind als Seed vorbereitet. Pia und Volker sind im Seed als Admins gesetzt.
 Das Team-Passwort soll nicht als Klartext gespeichert werden, sondern als Hash in `team_settings.team_password_hash`.
 Der Seed enthält dafür bewusst noch den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3`.
+
+Hash erzeugen:
+
+```bash
+npm run hash:password -- "DEIN_TEAM_PASSWORT"
+```
+
+Danach im Seed den Platzhalter ersetzen oder nach dem Seed in Supabase aktualisieren:
+
+```sql
+update public.team_settings
+set team_password_hash = 'DEIN_GENERIERTER_HASH';
+```
 
 ## D. GitHub / Deployment
 

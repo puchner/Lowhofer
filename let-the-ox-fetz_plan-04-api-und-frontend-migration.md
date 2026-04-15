@@ -6,6 +6,7 @@ Die bestehende App schrittweise von LocalStorage/Mock-Daten auf die neue API-Sch
 ## Voraussetzung
 Paket 1 ist im Repo umgesetzt. Neue API-Endpunkte werden als Cloudflare Pages Functions unter `functions/api/*` angelegt.
 Paket 2 ist im Repo umgesetzt. Das Supabase-Schema liegt unter `supabase/migrations`, die initialen Daten unter `supabase/seeds`, und das zentrale DB-/Frontend-Mapping unter `src/data/supabaseMappers.ts`.
+Paket 3 ist im Repo umgesetzt. Session-Endpunkte und `GET /api/players` existieren bereits; Paket 4 soll diese Basis erweitern statt neu aufzubauen.
 
 ## Leitprinzip
 API ist die Quelle der Wahrheit.
@@ -20,13 +21,13 @@ Für den MVP:
 ## API-Zielbild
 
 ### Session
-- `GET /api/session`
-- `POST /api/session/login`
-- `POST /api/session/player`
-- `POST /api/session/logout`
+- [x] `GET /api/session`
+- [x] `POST /api/session/login`
+- [x] `POST /api/session/player`
+- [x] `POST /api/session/logout`
 
 ### Spieler
-- `GET /api/players`
+- [x] `GET /api/players`
 - `POST /api/players` (admin)
 - `PATCH /api/players/:id` (admin)
 

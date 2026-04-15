@@ -4,6 +4,7 @@ import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { getAllUpcomingMatchDays, getUpcomingMatchDays } from "../domain/matchDayFilters";
 import { AvailabilityStatus } from "../domain/types";
+import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 interface DashboardPageProps {
@@ -12,8 +13,10 @@ interface DashboardPageProps {
 
 export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
   const { deletePoll, matchDays, players, updateAvailability, updatePoll } = usePlanner();
+  const session = useSession();
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
-  const [activePlayerId, setActivePlayerId] = useState<string | null>(null);
+  const activePlayerId = session.selectedPlayerId;
+  const canAdmin = isAdmin && session.selectedPlayerIsAdmin;
   const allUpcomingMatchDays = getAllUpcomingMatchDays(matchDays);
   const upcomingMatchDays = showAllMatchDays ? allUpcomingMatchDays : getUpcomingMatchDays(matchDays);
   const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
@@ -23,34 +26,13 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
       <div>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Kommende Spieltage</h2>
-          {isAdmin ? (
+          {canAdmin ? (
             <Link className="btn btn-secondary min-h-11 rounded-lg text-petrol-900" to="/admin/polls/new">
               + Abstimmung
             </Link>
           ) : null}
         </div>
       </div>
-
-      <section className="rounded-lg border border-primary/15 bg-base-100 p-2 shadow-sm sm:p-3">
-        <div className="flex flex-wrap gap-1.5">
-          {players.map((player) => {
-            const isActive = player.id === activePlayerId;
-
-            return (
-              <button
-                className={`min-h-9 rounded-lg px-3 text-sm font-bold ${
-                  isActive ? "bg-petrol-700 text-white" : "bg-base-200 text-base-content hover:bg-base-300"
-                }`}
-                key={player.id}
-                onClick={() => setActivePlayerId(isActive ? null : player.id)}
-                type="button"
-              >
-                {player.name}
-              </button>
-            );
-          })}
-        </div>
-      </section>
 
       <div className="grid gap-3">
         {upcomingMatchDays.map((matchDay) => {
@@ -60,7 +42,7 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
               : matchDay.availability.find((entry) => entry.playerId === activePlayerId)?.status ??
                 AvailabilityStatus.Unknown;
           const cardAction =
-            activePlayerId || isAdmin ? (
+            activePlayerId || canAdmin ? (
               <>
                 {activePlayerId ? (
                   <AvailabilityButtons
@@ -74,7 +56,7 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
                     value={availability}
                   />
                 ) : null}
-                {isAdmin ? (
+                {canAdmin ? (
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <button
                       className="btn btn-sm rounded-lg bg-base-300"
@@ -98,7 +80,7 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
           return (
             <MatchDayCard
               action={cardAction}
-              detailPath={isAdmin ? `/admin/match-days/${matchDay.id}` : `/match-days/${matchDay.id}`}
+              detailPath={canAdmin ? `/admin/match-days/${matchDay.id}` : `/match-days/${matchDay.id}`}
               key={matchDay.id}
               matchDay={matchDay}
               players={players}

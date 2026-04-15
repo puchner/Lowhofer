@@ -1,10 +1,10 @@
 -- Initial MVP seed derived from src/data/mockPlayers.ts and src/data/mockMatchDays.ts.
--- Before production use, confirm the player list, set exactly one intended admin,
--- and replace team_password_hash with the hash generated in Paket 3.
+-- Before production use, replace team_password_hash with the hash generated in Paket 3.
+-- Pia and Volker are initial trusted admins.
 
 insert into public.players (id, display_name, gender, is_active, is_admin, sort_order)
 values
-  ('00000000-0000-4000-8000-000000000001', 'Pia', 'female', true, false, 10),
+  ('00000000-0000-4000-8000-000000000001', 'Pia', 'female', true, true, 10),
   ('00000000-0000-4000-8000-000000000002', 'Nina', 'female', true, false, 20),
   ('00000000-0000-4000-8000-000000000003', 'Dani', 'female', true, false, 30),
   ('00000000-0000-4000-8000-000000000004', 'Caro', 'female', true, false, 40),
@@ -13,7 +13,7 @@ values
   ('00000000-0000-4000-8000-000000000007', 'Andi', 'male', true, false, 70),
   ('00000000-0000-4000-8000-000000000008', 'Lars', 'male', true, false, 80),
   ('00000000-0000-4000-8000-000000000009', 'Stefan', 'male', true, false, 90),
-  ('00000000-0000-4000-8000-000000000010', 'Volker', 'male', true, false, 100),
+  ('00000000-0000-4000-8000-000000000010', 'Volker', 'male', true, true, 100),
   ('00000000-0000-4000-8000-000000000011', 'Michi', 'male', true, false, 110),
   ('00000000-0000-4000-8000-000000000012', 'Fran', 'male', true, false, 120),
   ('00000000-0000-4000-8000-000000000013', 'Heli', 'male', true, false, 130)
@@ -21,6 +21,7 @@ on conflict (id) do update
 set display_name = excluded.display_name,
     gender = excluded.gender,
     is_active = excluded.is_active,
+    is_admin = excluded.is_admin,
     sort_order = excluded.sort_order;
 
 with player_positions_seed (player_id, position, is_primary) as (

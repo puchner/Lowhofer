@@ -11,8 +11,8 @@ Erstellt wurden:
 
 Noch außerhalb der IDE offen:
 - Migration und Seed im Supabase-Projekt ausführen oder Workflow verbinden
-- Spielerliste fachlich bestätigen
-- Admin-Spieler festlegen
+- Spielerliste fachlich bestätigen (erledigt: Liste passt)
+- Admin-Spieler festlegen (erledigt: Pia und Volker)
 - Team-Passwort-Hash erzeugen und den Seed-Platzhalter ersetzen
 - Liga-URLs in `team_settings` prüfen
 

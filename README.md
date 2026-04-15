@@ -52,6 +52,22 @@ Das Datenmodell fuer Paket 2 liegt unter `supabase/`.
 
 Vor produktiver Nutzung muessen Admin-Spieler, Spielerliste und `team_settings.team_password_hash` fachlich bestaetigt bzw. ersetzt werden.
 
+## Session und Team-Passwort
+
+Paket 3 schuetzt die App ueber ein gemeinsames Team-Passwort und speichert den aktiven Spieler in einem signierten httpOnly-Cookie.
+
+- Session-Endpunkte liegen unter `functions/api/session/*`.
+- `GET /api/players` liefert die aktive Spielerliste fuer die Spielerwahl.
+- Passwort-Hashes werden mit PBKDF2/SHA-256 erzeugt.
+
+Hash fuer das Team-Passwort erzeugen:
+
+```bash
+npm run hash:password -- "DEIN_TEAM_PASSWORT"
+```
+
+Den ausgegebenen Hash in `team_settings.team_password_hash` eintragen oder vor dem Seed in `supabase/seeds/001_initial_lowhofer_data.sql` ersetzen.
+
 ## Health Check
 
 Nach einem lokalen Pages-Start oder Deployment kann der Functions-Einstieg hier geprueft werden:
@@ -92,6 +108,7 @@ src/
   data/                Mock-Daten und Repository-Schicht
   domain/              Typen, Regeln und Analyse-Logik
   pages/               Routen-Seiten
+  session/             Session-Context, Passwort-Gate und Spielerwahl
   state/               React Context fuer MVP-State
   styles/              Tailwind-Einstieg
 ```

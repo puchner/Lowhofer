@@ -1,5 +1,31 @@
 # Paket 3 – Session, Team-Passwort und Spielerwahl
 
+## Status
+Im Repo umgesetzt.
+
+Erstellt wurden:
+- `functions/_shared/password.ts`
+- `functions/_shared/session.ts`
+- `functions/_shared/supabase.ts`
+- `functions/api/session/index.ts`
+- `functions/api/session/login.ts`
+- `functions/api/session/player.ts`
+- `functions/api/session/logout.ts`
+- `functions/api/players.ts`
+- `src/session/*`
+- `scripts/createPasswordHash.mjs`
+
+Fachlich gesetzt:
+- Pia und Volker sind im Seed Admins.
+- Die Spieler-UUIDs der Mock-Daten wurden an den Seed angeglichen, damit Session-Spielerwahl und lokale MVP-Daten bis Paket 4 konsistent bleiben.
+
+Noch außerhalb der IDE offen:
+- Team-Passwort festlegen
+- Passwort-Hash mit `npm run hash:password -- "DEIN_TEAM_PASSWORT"` erzeugen
+- Seed-Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder `team_settings.team_password_hash` nach dem Seed per SQL aktualisieren
+- Seed in Supabase ausführen
+- `SESSION_SECRET`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` in Cloudflare setzen bzw. prüfen
+
 ## Ziel
 Die App mit einem gemeinsamen Team-Passwort schützen und danach den aktiv ausgewählten Spieler **serverseitig** an die Session binden.
 
@@ -116,11 +142,11 @@ Der Agent kann Hashing und Session-Code vorbereiten, aber diese Punkte muss der 
 - bewusster Spielerwechsel
 
 ## Deliverables
-- funktionierendes Team-Passwort-Gate
-- `selectedPlayerId` serverseitig in Session
-- Session-Endpunkte
-- Frontend-Gate und Spielerauswahl
-- dokumentierter Admin-Vertrauensmodus
+- [x] funktionierendes Team-Passwort-Gate
+- [x] `selectedPlayerId` serverseitig in Session
+- [x] Session-Endpunkte
+- [x] Frontend-Gate und Spielerauswahl
+- [x] dokumentierter Admin-Vertrauensmodus
 
 ## Hinweise für den Agent
 - Keine `playerId` für den Response-Write aus LocalStorage „vertrauen“

@@ -7,6 +7,7 @@ import { BadgeList } from "../components/ui/BadgeList";
 import { RuleCard } from "../components/ui/RuleCard";
 import { StatusPill } from "../components/ui/StatusPill";
 import { TrafficLight } from "../components/ui/TrafficLight";
+import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 interface MatchDayDetailPageProps {
@@ -16,8 +17,10 @@ interface MatchDayDetailPageProps {
 export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps) {
   const { matchDayId } = useParams();
   const { deletePoll, matchDays, players, updatePoll } = usePlanner();
+  const { selectedPlayerIsAdmin } = useSession();
   const [statusFilter, setStatusFilter] = useState<AvailabilityStatus | "all">("all");
   const matchDay = matchDays.find((item) => item.id === matchDayId);
+  const canAdmin = isAdmin && selectedPlayerIsAdmin;
 
   const playerRows = useMemo(() => {
     if (!matchDay) {
@@ -50,14 +53,14 @@ export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps)
     <section className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Link className="link link-primary text-sm" to={isAdmin ? "/admin" : "/"}>
+          <Link className="link link-primary text-sm" to={canAdmin ? "/admin" : "/"}>
             Zurück
           </Link>
           <h2 className="mt-2 text-3xl font-bold text-petrol-900">{matchDay.opponent}</h2>
           <p className="text-base-content/70">
             {formatDate(matchDay.date)} {matchDay.time ? `um ${matchDay.time}` : ""} · {matchDay.location}
           </p>
-          {isAdmin ? (
+          {canAdmin ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {matchDay.type === "date-finding" ? (
                 <button
