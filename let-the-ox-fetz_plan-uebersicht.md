@@ -38,7 +38,7 @@ Sie ersetzt den bisherigen Einzelplan durch mehrere thematisch getrennte Pläne.
    - Status: im Repo umgesetzt; Seed-Ausführung, Passwort-Hash und Cloudflare-Secrets stehen noch extern aus
 
 4. `04-api-und-frontend-migration.md`
-   - API-Endpunkte, Umstellung der bestehenden App von LocalStorage auf API
+   - API-Endpunkte, Umstellung der bestehenden App von LocalStorage auf API, kombinierter Login-/Spielerfluss, Admin-Funktionen ohne separate Admin-URLs
    - Status: offen
 
 5. `05-verbandsdaten-und-cache.md`
@@ -64,6 +64,7 @@ Für 14 Personen, seltene Parallelität, wenige Polls und einen 15-Minuten-Cache
 - `is_admin` ist innerhalb des Teams **kein harter Schutz**
 - Wer das Team-Passwort kennt, kann auch den Admin-Spieler auswählen
 - Das ist bewusst so entschieden und muss dokumentiert, aber nicht „wegdesignt“ werden
+- Admin ist kein eigener URL-Bereich als Produktmodell; Admin-Funktionen werden im normalen UI eingeblendet, wenn der aktive Session-Spieler Admin ist
 
 ## Aufgaben außerhalb der IDE
 
@@ -85,6 +86,6 @@ Diese Punkte kann der Agent vorbereiten oder dokumentieren, aber nicht vollstän
 1. Cloudflare-Umstellung: erledigt
 2. Supabase-Datenmodell + Migrationen + Seeds: im Repo erledigt; extern noch Supabase ausführen und Seed fachlich freigeben
 3. Session-/Passwort-Gate + Spielerwahl in Session: im Repo erledigt; extern noch Passwort-Hash, Seed und Secrets finalisieren
-4. Polls/Responses/Spieler auf API umstellen
+4. Polls/Responses/Spieler auf API umstellen und dabei Login-/Spielerfluss sowie Admin-UI konsolidieren
 5. Verbandsdaten-API + Cache
 6. Tests, Doku, Rest-Refactorings
