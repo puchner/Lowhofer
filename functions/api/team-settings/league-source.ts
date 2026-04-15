@@ -4,6 +4,8 @@ import { jsonResponse, readJsonBody } from "../../_shared/http";
 import { deriveLeagueUrls, validateLeagueBaseUrl } from "../../_shared/leagueSource";
 import { getTeamLeagueSettings, invalidateLeagueCache, updateTeamLeagueSource } from "../../_shared/supabase";
 
+const FALLBACK_LEAGUE_BASE_URL = "https://www.volleyball-freizeit.de/saison/1083";
+
 export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
   const authenticated = await requireSelectedPlayer(request, env);
 
@@ -12,9 +14,11 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
   }
 
   const settings = await getTeamLeagueSettings(env);
+  const leagueBaseUrl =
+    settings?.league_base_url ?? deriveLeagueBaseUrl(settings?.league_table_url) ?? FALLBACK_LEAGUE_BASE_URL;
 
   return jsonResponse({
-    leagueBaseUrl: settings?.league_base_url ?? null,
+    leagueBaseUrl,
     leagueTableUrl: settings?.league_table_url ?? null,
     leagueFixturesUrl: settings?.league_fixtures_url ?? null,
   });
@@ -62,3 +66,18 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
     leagueFixturesUrl: fixturesUrl,
   });
 };
+
+function deriveLeagueBaseUrl(xmlUrl: string | null | undefined): string | null {
+  if (!xmlUrl) {
+    return null;
+  }
+
+  try {
+    const parsed = new URL(xmlUrl);
+    const seasonId = parsed.searchParams.get("i");
+
+    return seasonId ? `${parsed.origin}/saison/${seasonId}` : null;
+  } catch {
+    return null;
+  }
+}

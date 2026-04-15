@@ -203,6 +203,7 @@ insert into public.team_settings (
   minimum_yes_players,
   mixed_minimum_women_on_field,
   libero_counts_as_full_woman,
+  league_base_url,
   league_table_url,
   league_fixtures_url
 )
@@ -214,6 +215,7 @@ values (
   6,
   2,
   false,
+  'https://www.volleyball-freizeit.de/saison/1083',
   'https://www.volleyball-freizeit.de/sprung_tabelle?i=1083&xml=1',
   'https://www.volleyball-freizeit.de/sprung_spielplan?i=1083&xml=1'
 )
@@ -224,5 +226,6 @@ set team_name = excluded.team_name,
     minimum_yes_players = excluded.minimum_yes_players,
     mixed_minimum_women_on_field = excluded.mixed_minimum_women_on_field,
     libero_counts_as_full_woman = excluded.libero_counts_as_full_woman,
+    league_base_url = excluded.league_base_url,
     league_table_url = excluded.league_table_url,
     league_fixtures_url = excluded.league_fixtures_url;

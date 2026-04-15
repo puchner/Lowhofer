@@ -55,7 +55,8 @@ Das SQL liegt jetzt im Repo unter `supabase/`.
 Wenn kein Supabase-CLI-Workflow verbunden ist, führe die Dateien im Supabase SQL Editor in dieser Reihenfolge aus:
 
 1. `supabase/migrations/202604150001_create_core_schema.sql`
-2. `supabase/seeds/001_initial_lowhofer_data.sql`
+2. `supabase/migrations/202604160001_add_league_base_url.sql`
+3. `supabase/seeds/001_initial_lowhofer_data.sql`
 
 Geplante Tabellen:
 - `players`
