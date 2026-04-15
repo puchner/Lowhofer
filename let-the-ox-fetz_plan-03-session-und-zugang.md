@@ -5,6 +5,7 @@ Die App mit einem gemeinsamen Team-Passwort schützen und danach den aktiv ausge
 
 ## Voraussetzung
 Paket 1 ist im Repo umgesetzt. Session-Endpunkte sollen als Cloudflare Pages Functions unter `functions/api/session/*` entstehen.
+Paket 2 ist im Repo vorbereitet: `team_settings.team_password_hash` existiert in Supabase, der Seed enthält bis zur Passwortentscheidung den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3`.
 
 ## Verbindliche Produktentscheidung
 - Kein individuelles Login pro Person
@@ -95,6 +96,7 @@ Für Cloudflare-konforme, schlanke Umsetzung:
 Zusätzlich einplanen:
 - `SESSION_SECRET` als Secret/Env Var
 - Session-Cookie signieren oder robust absichern
+- erzeugten Passwort-Hash in `team_settings.team_password_hash` eintragen bzw. den Seed vor Ausführung ersetzen
 
 ## Aufgaben des Nutzers außerhalb der IDE
 
@@ -103,7 +105,7 @@ Der Agent kann Hashing und Session-Code vorbereiten, aber diese Punkte muss der 
 - Team-Passwort festlegen
 - `SESSION_SECRET` als ausreichend langes zufälliges Secret erzeugen oder freigeben
 - `SESSION_SECRET` in Cloudflare als Secret hinterlegen
-- initialen Passwort-Hash bzw. Seed im Supabase-Projekt freigeben
+- initialen Passwort-Hash bzw. Seed im Supabase-Projekt freigeben; im vorbereiteten Seed steht aktuell `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3`
 - Team intern über den bewusst vertrauensbasierten Admin-Modus informieren
 
 ## Frontend-Aufgaben

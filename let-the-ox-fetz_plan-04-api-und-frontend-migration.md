@@ -5,6 +5,7 @@ Die bestehende App schrittweise von LocalStorage/Mock-Daten auf die neue API-Sch
 
 ## Voraussetzung
 Paket 1 ist im Repo umgesetzt. Neue API-Endpunkte werden als Cloudflare Pages Functions unter `functions/api/*` angelegt.
+Paket 2 ist im Repo umgesetzt. Das Supabase-Schema liegt unter `supabase/migrations`, die initialen Daten unter `supabase/seeds`, und das zentrale DB-/Frontend-Mapping unter `src/data/supabaseMappers.ts`.
 
 ## Leitprinzip
 API ist die Quelle der Wahrheit.
@@ -86,6 +87,7 @@ Die fachliche Analyse soll erhalten bleiben:
 - `leagueTable.ts`
 
 Diese Dateien sollen über Mapper/API-Daten gespeist werden, aber keine Infrastruktur kennen.
+Das bereits angelegte Mapping in `src/data/supabaseMappers.ts` soll dafür genutzt oder serverseitig gespiegelt werden, statt neue Status-/Datums-Mappings verteilt einzubauen.
 
 ## Deliverables
 - Polls/Spieler/Responses laufen über API

@@ -5,6 +5,7 @@ Liga-Tabelle und Fixtures serverseitig laden, parsen, normalisieren und mit 15-M
 
 ## Voraussetzung
 Paket 1 ist im Repo umgesetzt. League-Endpunkte sollen als Cloudflare Pages Functions unter `functions/api/league/*` entstehen.
+Paket 2 hat die Tabelle `league_cache` sowie die Liga-URL-Felder in `team_settings` angelegt.
 
 ## Verbindliche Regel
 Verbandsdaten werden **nicht direkt im Browser** geladen.
@@ -15,6 +16,7 @@ Aktuell:
 - Fixtures: `https://www.volleyball-freizeit.de/sprung_spielplan?i=1083&xml=1`
 
 Diese URLs sollen in `team_settings` oder Konfiguration gekapselt werden.
+Im vorbereiteten Seed stehen sie in `team_settings.league_table_url` und `team_settings.league_fixtures_url`.
 
 ## API-Endpunkte
 

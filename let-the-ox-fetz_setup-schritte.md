@@ -50,7 +50,12 @@ Die Supabase-Verbindung bleibt serverseitig in den Cloudflare Pages Functions.
 ## C. Datenbank initial einrichten
 
 ### 6. Migrationen / SQL in Supabase ausführen
-Das eigentliche SQL kann dein Agent vorbereiten, aber du musst es üblicherweise einmal im Supabase-Projekt ausführen oder den Migrations-Workflow verbinden.
+Das SQL liegt jetzt im Repo unter `supabase/`.
+
+Wenn kein Supabase-CLI-Workflow verbunden ist, führe die Dateien im Supabase SQL Editor in dieser Reihenfolge aus:
+
+1. `supabase/migrations/202604150001_create_core_schema.sql`
+2. `supabase/seeds/001_initial_lowhofer_data.sql`
 
 Geplante Tabellen:
 - `players`
@@ -67,8 +72,9 @@ Du musst entscheiden oder einpflegen:
 - Spielerliste
 - welcher Spieler Admin ist
 
-Das kann technisch per Seed-Script passieren, aber du musst die Inhalte festlegen.
+Die initialen Mock-Daten sind als Seed vorbereitet, aber du musst die Inhalte fachlich freigeben.
 Das Team-Passwort soll nicht als Klartext gespeichert werden, sondern als Hash in `team_settings.team_password_hash`.
+Der Seed enthält dafür bewusst noch den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3`.
 
 ## D. GitHub / Deployment
 

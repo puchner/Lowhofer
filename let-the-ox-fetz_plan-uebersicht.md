@@ -27,22 +27,27 @@ Sie ersetzt den bisherigen Einzelplan durch mehrere thematisch getrennte Pläne.
 
 1. `01-cloudflare-umstellung.md`
    - Plattform- und Repo-Umstellung von Firebase-orientiert zu Cloudflare-orientiert
-   - Status: im Repo umgesetzt; Cloudflare-/GitHub-Dashboard-Schritte stehen noch aus
+   - Status: erledigt; Cloudflare ist angebunden und das Projekt ist mit dem GitHub-Repo verbunden
 
 2. `02-datenmodell-und-supabase.md`
    - Ziel-Datenmodell, Migrationen, Constraints, Seeds, Zeitzone, `homeAway`
+   - Status: im Repo umgesetzt; Supabase-Dashboard-Ausführung und fachliche Seed-Freigaben stehen noch aus
 
 3. `03-session-und-zugang.md`
    - Team-Passwort, Session, Spielerwahl, serverseitige Speicherung des aktiven Spielers
+   - Status: offen
 
 4. `04-api-und-frontend-migration.md`
    - API-Endpunkte, Umstellung der bestehenden App von LocalStorage auf API
+   - Status: offen
 
 5. `05-verbandsdaten-und-cache.md`
    - XML-Abruf, Parser, 15-Minuten-Cache, Fallback auf letzten gültigen Stand
+   - Status: offen
 
 6. `06-tests-polish-und-definition-of-done.md`
    - Testsetup, Qualitätssicherung, Refactoring-Restarbeiten, Abschlusskriterien
+   - Status: offen
 
 ## Kosten- und Free-Plan-Einschätzung
 
@@ -71,14 +76,14 @@ Diese Punkte kann der Agent vorbereiten oder dokumentieren, aber nicht vollstän
 - Cloudflare-Secrets setzen, insbesondere `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` und `SESSION_SECRET`
 - Team-Passwort festlegen und den initialen Passwort-Hash bzw. Seed freigeben
 - initiale Spielerliste und Admin-Spieler fachlich bestätigen
-- SQL-Migrationen im Supabase-Projekt ausführen oder einen Migrationsworkflow verbinden
+- SQL-Migration `supabase/migrations/202604150001_create_core_schema.sql` und Seed `supabase/seeds/001_initial_lowhofer_data.sql` im Supabase-Projekt ausführen oder einen Migrationsworkflow verbinden
 - ersten produktiven Cloudflare-Deploy auslösen und in Cloudflare/Supabase-Dashboards prüfen
 - finalen Link ans Team verteilen
 
 ## Empfohlene Umsetzungsreihenfolge
 
-1. Cloudflare-Umstellung: im Repo erledigt; extern noch GitHub/Cloudflare verbinden
-2. Supabase-Datenmodell + Migrationen + Seeds
+1. Cloudflare-Umstellung: erledigt
+2. Supabase-Datenmodell + Migrationen + Seeds: im Repo erledigt; extern noch Supabase ausführen und Seed fachlich freigeben
 3. Session-/Passwort-Gate + Spielerwahl in Session
 4. Polls/Responses/Spieler auf API umstellen
 5. Verbandsdaten-API + Cache

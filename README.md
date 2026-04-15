@@ -42,6 +42,16 @@ Diese Werte werden nur serverseitig in Cloudflare Pages Functions verwendet und 
 
 Das Frontend spricht fuer MVP-Geschaeftsdaten mit `/api/*` und nutzt keinen direkten Supabase-Client.
 
+## Supabase
+
+Das Datenmodell fuer Paket 2 liegt unter `supabase/`.
+
+- `supabase/migrations/202604150001_create_core_schema.sql` erstellt die Tabellen, Constraints, Indizes, Trigger und aktiviert RLS.
+- `supabase/seeds/001_initial_lowhofer_data.sql` ueberfuehrt die bisherigen Mock-Spieler, Polls und Responses in initiale Daten.
+- `src/data/supabaseMappers.ts` kapselt das Mapping zwischen DB-Slugs/`timestamptz` und dem bestehenden Frontendmodell.
+
+Vor produktiver Nutzung muessen Admin-Spieler, Spielerliste und `team_settings.team_password_hash` fachlich bestaetigt bzw. ersetzt werden.
+
 ## Health Check
 
 Nach einem lokalen Pages-Start oder Deployment kann der Functions-Einstieg hier geprueft werden:
@@ -69,6 +79,10 @@ In einem spaeteren Paket wird diese Logik in wiederverwendbare Parser ueberfuehr
 functions/             Cloudflare Pages Functions
   api/                 API-Endpunkte als /api/*
   _shared/             Serverseitige Hilfsfunktionen
+
+supabase/
+  migrations/          SQL-Migrationen fuer Supabase
+  seeds/               Initiale Seed-Daten
 
 src/
   api/                 Frontend-API-Konfiguration

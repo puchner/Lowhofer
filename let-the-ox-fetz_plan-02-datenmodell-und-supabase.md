@@ -1,5 +1,21 @@
 # Paket 2 – Datenmodell und Supabase
 
+## Status
+Im Repo umgesetzt.
+
+Erstellt wurden:
+- `supabase/migrations/202604150001_create_core_schema.sql`
+- `supabase/seeds/001_initial_lowhofer_data.sql`
+- `supabase/README.md`
+- `src/data/supabaseMappers.ts`
+
+Noch außerhalb der IDE offen:
+- Migration und Seed im Supabase-Projekt ausführen oder Workflow verbinden
+- Spielerliste fachlich bestätigen
+- Admin-Spieler festlegen
+- Team-Passwort-Hash erzeugen und den Seed-Platzhalter ersetzen
+- Liga-URLs in `team_settings` prüfen
+
 ## Ziel
 Die bisherige LocalStorage-/Mock-Persistenz durch ein relationales Datenmodell in Supabase ersetzen.
 
@@ -155,10 +171,10 @@ Der Agent kann Migrationen und Seeds vorbereiten, braucht aber fachliche bzw. Da
 - prüfen, ob die initialen Liga-URLs in `team_settings` korrekt sind
 
 ## Deliverables
-- SQL-Migrationen
-- sinnvolle Indizes und Constraints
-- Seed-Daten auf Basis der Mock-Daten
-- Mapper zwischen DB und Frontendmodell
+- [x] SQL-Migrationen
+- [x] sinnvolle Indizes und Constraints
+- [x] Seed-Daten auf Basis der Mock-Daten
+- [x] Mapper zwischen DB und Frontendmodell
 
 ## Hinweise für den Agent
 - Noch keine unnötige Voll-Umbenennung von `MatchDay`

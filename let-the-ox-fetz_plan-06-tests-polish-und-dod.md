@@ -49,6 +49,11 @@ Bereits durch Paket 1 erledigt:
 - Firebase-Konfigurationsdateien und Firebase-Deploy-Skripte entfernt
 - README und Setup-Dokumentation auf Cloudflare Pages aktualisiert
 
+Bereits durch Paket 2 erledigt:
+- Supabase-Migration und initialer Seed unter `supabase/` ergänzt
+- zentrale DB-/Frontend-Mapper in `src/data/supabaseMappers.ts` ergänzt
+- README und Setup-Dokumentation um Supabase-Schritte erweitert
+
 ### Mittel
 - `MatchDay` schrittweise in `AvailabilityPoll` überführen
 - Detailseite mobile-first verbessern
@@ -66,7 +71,7 @@ Die erste Version gilt als fertig, wenn:
 1. die App über Cloudflare Pages läuft
 2. die App durch Team-Passwort geschützt ist
 3. der aktive Spieler serverseitig in der Session gespeichert wird
-4. Spieler, Polls und Responses in Supabase persistieren
+4. Spieler, Polls und Responses in Supabase persistieren; Schema und Seed sind vorbereitet, API-Anbindung folgt in Paket 4
 5. Responses nur für den aktuell in der Session gewählten Spieler geschrieben werden
 6. Admin Polls anlegen/bearbeiten/löschen bzw. archivieren kann
 7. `homeAway` korrekt persistiert und genutzt wird
