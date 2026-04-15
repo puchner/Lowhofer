@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
@@ -8,7 +9,7 @@ import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function DashboardPage() {
-  const { deletePoll, error, isLoading, matchDays, players, updateAvailability, updatePoll } = usePlanner();
+  const { deletePoll, error, isLoading, matchDays, players, updateAvailability } = usePlanner();
   const session = useSession();
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
   const activePlayerId = session.selectedPlayerId;
@@ -21,7 +22,7 @@ export function DashboardPage() {
     <section className="space-y-4 sm:space-y-5">
       <div>
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Kommende Spieltage</h2>
+          <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Termine</h2>
           {canAdmin ? (
             <Link className="btn btn-secondary min-h-11 rounded-lg text-petrol-900" to="/polls/new">
               + Abstimmung
@@ -40,50 +41,52 @@ export function DashboardPage() {
 
       <div className="grid gap-3">
         {upcomingMatchDays.map((matchDay) => {
-          const availability =
+          const activeAvailability =
             activePlayerId === null
-              ? AvailabilityStatus.Unknown
-              : matchDay.availability.find((entry) => entry.playerId === activePlayerId)?.status ??
-                AvailabilityStatus.Unknown;
+              ? undefined
+              : matchDay.availability.find((entry) => entry.playerId === activePlayerId);
+          const availability = activeAvailability?.status ?? AvailabilityStatus.Unknown;
           const cardAction =
-            activePlayerId || canAdmin ? (
-              <>
-                {activePlayerId ? (
-                  <AvailabilityButtons
-                    onChange={(status) =>
-                      updateAvailability({
-                        matchDayId: matchDay.id,
-                        status,
-                      })
-                    }
-                    value={availability}
-                  />
-                ) : null}
-                {canAdmin ? (
-                  <div className="mt-2 grid grid-cols-2 gap-2">
-                    <button
-                      className="btn btn-sm rounded-lg bg-base-300"
-                      onClick={() => void updatePoll({ pollId: matchDay.id, status: "archived" })}
-                      type="button"
-                    >
-                      Archiv
-                    </button>
-                    <button
-                      className="btn btn-sm btn-error rounded-lg"
-                      onClick={() => void deletePoll(matchDay.id)}
-                      type="button"
-                    >
-                      Löschen
-                    </button>
-                  </div>
-                ) : null}
-              </>
+            activePlayerId ? (
+              <AvailabilityButtons
+                comment={activeAvailability?.comment}
+                onChange={(status, comment) =>
+                  updateAvailability({
+                    comment,
+                    matchDayId: matchDay.id,
+                    status,
+                  })
+                }
+                value={availability}
+              />
             ) : undefined;
+          const headerAction = canAdmin ? (
+            <>
+              <Link
+                aria-label="Abstimmung bearbeiten"
+                className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
+                title="Bearbeiten"
+                to={`/polls/${matchDay.id}/edit`}
+              >
+                <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+              </Link>
+              <button
+                aria-label="Abstimmung löschen"
+                className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
+                onClick={() => void deletePoll(matchDay.id)}
+                title="Löschen"
+                type="button"
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+              </button>
+            </>
+          ) : undefined;
 
           return (
             <MatchDayCard
               action={cardAction}
               detailPath={`/match-days/${matchDay.id}`}
+              headerAction={headerAction}
               key={matchDay.id}
               matchDay={matchDay}
               players={players}

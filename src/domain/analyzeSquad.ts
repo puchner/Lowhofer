@@ -4,28 +4,28 @@ import {
   Gender,
   MatchDay,
   Player,
-  Position,
   SquadAnalysis,
 } from "./types";
 import {
   checkMinimumPlayers,
   checkMixedRule,
   MIXED_MINIMUM_FEMALE_COURT_PLAYERS,
-  REQUIRED_ROLE_COUNTS,
 } from "./squadRules";
 import { findPossibleLineup } from "./lineup";
+import { buildRoleCoverage } from "./roleCoverage";
 
 export function analyzeMatchDay(matchDay: MatchDay, players: Player[]): SquadAnalysis {
   const availablePlayers = playersForStatus(matchDay, players, AvailabilityStatus.Available);
   const maybePlayers = playersForStatus(matchDay, players, AvailabilityStatus.Maybe);
-  const coverage = buildCoverage(availablePlayers, maybePlayers);
-  const possibleLineup = findPossibleLineup(availablePlayers, undefined, {
+  const coverage = buildRoleCoverage(availablePlayers, maybePlayers);
+  const possibleLineup = findPossibleLineup(availablePlayers);
+  const mixedRuleLineup = findPossibleLineup(availablePlayers, undefined, {
     minFemaleCourtPlayers: MIXED_MINIMUM_FEMALE_COURT_PLAYERS,
   });
   const minimumPlayersCheck = checkMinimumPlayers(availablePlayers.length);
-  const mixedRuleCheck = checkMixedRule(possibleLineup);
+  const mixedRuleCheck = checkMixedRule(mixedRuleLineup);
   const missingPositions = coverage
-    .filter((result) => !result.isCovered)
+    .filter((result) => result.required > 0 && !result.isCovered)
     .map((result) => result.position);
   const criticalPositions = coverage.filter((result) => result.isCritical);
   const maleAvailableCount = countAvailableMen(availablePlayers);
@@ -40,7 +40,7 @@ export function analyzeMatchDay(matchDay: MatchDay, players: Player[]): SquadAna
     matchDayId: matchDay.id,
     availableCount: availablePlayers.length,
     maybeCount: maybePlayers.length,
-    coveredPositions: coverage.filter((result) => result.isCovered).map((result) => result.position),
+    coveredPositions: coverage.filter((result) => result.required > 0 && result.isCovered).map((result) => result.position),
     missingPositions,
     criticalPositions,
     coverage,
@@ -70,23 +70,6 @@ function playersForStatus(
   );
 
   return players.filter((player) => playerIds.has(player.id));
-}
-
-function buildCoverage(availablePlayers: Player[], maybePlayers: Player[]): CoverageResult[] {
-  return Object.values(Position).map((position) => {
-    const availableForPosition = availablePlayers.filter((player) => player.positions.includes(position));
-    const maybeForPosition = maybePlayers.filter((player) => player.positions.includes(position));
-    const required = REQUIRED_ROLE_COUNTS[position] ?? 1;
-
-    return {
-      position,
-      required,
-      availablePlayers: availableForPosition,
-      candidates: [...availableForPosition, ...maybeForPosition],
-      isCovered: availableForPosition.length >= required,
-      isCritical: availableForPosition.length < required + 1,
-    };
-  });
 }
 
 function determineStatus(

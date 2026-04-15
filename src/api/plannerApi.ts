@@ -58,12 +58,16 @@ export async function deletePoll(pollId: string): Promise<void> {
   });
 }
 
-export async function updateAvailability(matchDayId: string, status: AvailabilityStatus): Promise<MatchAvailability> {
+export async function updateAvailability(
+  matchDayId: string,
+  status: AvailabilityStatus,
+  comment?: string | null,
+): Promise<MatchAvailability> {
   const body = await requestJson<{ response: MatchAvailability }>(
     `/api/polls/${encodeURIComponent(matchDayId)}/response`,
     {
       method: "PUT",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ comment, status }),
     },
   );
 

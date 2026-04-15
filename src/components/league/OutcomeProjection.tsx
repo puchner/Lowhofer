@@ -1,5 +1,6 @@
+import { LOWHOFER_TEAM_NAME } from "../../data/leagueSnapshot";
 import { MatchDay } from "../../domain/types";
-import { buildLowhoferOutcomeScenarios } from "../../domain/leagueTable";
+import { buildLowhoferOutcomeScenarios, sortStandings } from "../../domain/leagueTable";
 import { LeagueStanding } from "../../domain/leagueTypes";
 
 interface OutcomeProjectionProps {
@@ -14,19 +15,25 @@ export function OutcomeProjection({ matchDay, standings }: OutcomeProjectionProp
     return null;
   }
 
+  const currentRank = getCurrentLowhoferRank(standings);
+
+  if (!currentRank) {
+    return null;
+  }
+
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-1">
       {scenarios.map((scenario) => {
-        const trend = trendMeta[scenario.rankTrend];
+        const rankChange = currentRank - scenario.lowhoferRank;
 
         return (
           <span
-            className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold ${trend.className}`}
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-bold ${getChangeClass(rankChange)}`}
             key={scenario.label}
             title={`Lowhofer waere auf Platz ${scenario.lowhoferRank}`}
           >
-            <span aria-hidden="true">{trend.icon}</span>
-            {scenario.label}
+            <span>{scenario.label}</span>
+            <span>{formatRankChange(rankChange)}</span>
           </span>
         );
       })}
@@ -34,17 +41,30 @@ export function OutcomeProjection({ matchDay, standings }: OutcomeProjectionProp
   );
 }
 
-const trendMeta = {
-  up: {
-    icon: "↑",
-    className: "bg-success/15 text-success",
-  },
-  same: {
-    icon: "-",
-    className: "bg-warning/20 text-warning",
-  },
-  down: {
-    icon: "↓",
-    className: "bg-error/15 text-error",
-  },
-};
+function formatRankChange(change: number): string {
+  if (change > 0) {
+    return `+${change}`;
+  }
+
+  if (change === 0) {
+    return "0";
+  }
+
+  return `${change}`;
+}
+
+function getChangeClass(change: number): string {
+  if (change > 0) {
+    return "bg-success/15 text-success";
+  }
+
+  if (change < 0) {
+    return "bg-error/15 text-error";
+  }
+
+  return "bg-warning/20 text-warning";
+}
+
+function getCurrentLowhoferRank(standings: LeagueStanding[]): number {
+  return sortStandings(standings).findIndex((standing) => standing.team === LOWHOFER_TEAM_NAME) + 1;
+}

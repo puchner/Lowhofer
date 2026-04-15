@@ -4,6 +4,7 @@ import { AvailabilityStatus, LeagueFixture, MatchDay, Player, PollType } from ".
 export interface UpdateAvailabilityInput {
   matchDayId: string;
   status: AvailabilityStatus;
+  comment?: string | null;
 }
 
 export interface CreatePollInput {
@@ -19,8 +20,14 @@ export interface CreatePollInput {
 
 export interface UpdatePollInput {
   pollId: string;
+  title?: string;
   type?: PollType;
   status?: "open" | "archived" | "cancelled";
+  date?: string;
+  time?: string;
+  opponent?: string;
+  homeAway?: "home" | "away" | "unknown";
+  location?: string;
 }
 
 export interface PlannerContextValue {

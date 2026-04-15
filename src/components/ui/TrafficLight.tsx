@@ -2,9 +2,10 @@ import { SquadAnalysis } from "../../domain/types";
 
 interface TrafficLightProps {
   status: SquadAnalysis["status"];
+  compact?: boolean;
 }
 
-export function TrafficLight({ status }: TrafficLightProps) {
+export function TrafficLight({ compact = false, status }: TrafficLightProps) {
   const label = {
     playable: "Ox ready!",
     critical: "Ox unsteady...",
@@ -19,5 +20,5 @@ export function TrafficLight({ status }: TrafficLightProps) {
     "ladies-night": "bg-secondary text-petrol-900",
   }[status];
 
-  return <span className={`badge border-0 ${classes}`}>{label}</span>;
+  return <span className={`badge border-0 ${compact ? "badge-sm" : ""} ${classes}`}>{label}</span>;
 }

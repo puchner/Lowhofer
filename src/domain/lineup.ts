@@ -17,6 +17,19 @@ export function findPossibleLineup(
   return backtrack(sortedRoles, players, [], new Set(), options);
 }
 
+export function getMaxFemaleCourtPlayers(
+  players: Player[],
+  roles: Position[] = CORE_LINEUP_ROLES,
+): number {
+  for (let femaleCount = roles.length; femaleCount >= 0; femaleCount -= 1) {
+    if (findPossibleLineup(players, roles, { minFemaleCourtPlayers: femaleCount })) {
+      return femaleCount;
+    }
+  }
+
+  return 0;
+}
+
 function backtrack(
   roles: Position[],
   players: Player[],

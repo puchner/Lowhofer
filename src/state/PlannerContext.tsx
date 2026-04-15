@@ -51,8 +51,8 @@ export function PlannerProvider({ children }: PropsWithChildren) {
     void refresh();
   }, [refresh]);
 
-  async function updateAvailability({ matchDayId, status }: UpdateAvailabilityInput) {
-    const response = await updateAvailabilityApi(matchDayId, status);
+  async function updateAvailability({ comment, matchDayId, status }: UpdateAvailabilityInput) {
+    const response = await updateAvailabilityApi(matchDayId, status, comment);
 
     setMatchDays((currentMatchDays) =>
       currentMatchDays.map((matchDay) => {
