@@ -2,7 +2,7 @@ const HASH_PREFIX = "pbkdf2-sha256";
 const HASH_PARTS = 4;
 
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
-  const parts = storedHash.split("$");
+  const parts = storedHash.trim().split("$").map((part) => part.trim());
 
   if (parts.length !== HASH_PARTS || parts[0] !== HASH_PREFIX) {
     return false;
@@ -69,7 +69,7 @@ function timingSafeEqual(left: Uint8Array, right: Uint8Array): boolean {
 }
 
 function base64ToBytes(value: string): Uint8Array {
-  return Uint8Array.from(atob(value), (char) => char.charCodeAt(0));
+  return Uint8Array.from(atob(value.replaceAll(/\s/g, "")), (char) => char.charCodeAt(0));
 }
 
 function bytesToBase64(value: Uint8Array): string {
