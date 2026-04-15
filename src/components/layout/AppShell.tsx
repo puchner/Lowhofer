@@ -2,8 +2,10 @@ import { ExternalLink } from "lucide-react";
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { fetchLeagueSource } from "../../api/plannerApi";
+import { PlayerAvatar } from "../players/PlayerAvatar";
 import { SessionGate } from "../../session/SessionGate";
 import { useSession } from "../../session/sessionStore";
+import { usePlanner } from "../../state/plannerStore";
 import { OxHeadMark } from "../branding/OxHeadMark";
 
 const navigationItems = [
@@ -91,20 +93,27 @@ function LeagueSiteLink() {
 
 function SessionControls() {
   const session = useSession();
+  const { players } = usePlanner();
+  const selectedPlayer = players.find((player) => player.id === session.selectedPlayerId);
 
   return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <div className="min-w-0">
-        <span className="font-semibold uppercase tracking-wide text-neon">Spieler</span>
-        <span className="ml-2 font-black text-white">{session.selectedPlayerDisplayName}</span>
+    <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+      <div className="flex min-w-0 items-center gap-2">
+        {selectedPlayer ? <PlayerAvatar className="ring-white/20" player={selectedPlayer} size="sm" /> : null}
+        <div className="min-w-0">
+          <span className="font-semibold uppercase tracking-wide text-neon">Spieler</span>
+          <span className="ml-2 font-black text-white">{session.selectedPlayerDisplayName}</span>
+        </div>
       </div>
-      <button
-        className="btn btn-xs min-h-8 shrink-0 rounded-lg border-white/20 bg-white/10 px-2.5 text-white hover:bg-white/20"
-        onClick={session.logout}
-        type="button"
-      >
-        Das bin ich nicht
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          className="btn btn-xs min-h-8 rounded-lg border-white/20 bg-white/10 px-2.5 text-white hover:bg-white/20"
+          onClick={session.logout}
+          type="button"
+        >
+          Das bin ich nicht
+        </button>
+      </div>
     </div>
   );
 }

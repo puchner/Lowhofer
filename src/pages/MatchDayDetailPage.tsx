@@ -1,7 +1,9 @@
 import { BusFront, CircleHelp, House, Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { PlayerPill } from "../components/players/PlayerPill";
 import { analyzeMatchDay } from "../domain/analyzeSquad";
+import { sortPlayersForCurrentUser } from "../domain/playerSorting";
 import { AvailabilityStatus, MatchAvailability, Player } from "../domain/types";
 import { StatusPill } from "../components/ui/StatusPill";
 import { TrafficLight } from "../components/ui/TrafficLight";
@@ -12,7 +14,7 @@ export function MatchDayDetailPage() {
   const navigate = useNavigate();
   const { matchDayId } = useParams();
   const { deletePoll, matchDays, players } = usePlanner();
-  const { selectedPlayerIsAdmin } = useSession();
+  const { selectedPlayerId, selectedPlayerIsAdmin } = useSession();
   const matchDay = matchDays.find((item) => item.id === matchDayId);
   const canAdmin = selectedPlayerIsAdmin;
 
@@ -21,11 +23,11 @@ export function MatchDayDetailPage() {
       return [];
     }
 
-    return players.map((player) => ({
+    return sortPlayersForCurrentUser(players, selectedPlayerId).map((player) => ({
       player,
       availability: matchDay.availability.find((entry) => entry.playerId === player.id),
     }));
-  }, [matchDay, players]);
+  }, [matchDay, players, selectedPlayerId]);
 
   if (!matchDay) {
     return (
@@ -85,12 +87,11 @@ export function MatchDayDetailPage() {
                     {group.rows
                       .filter((row) => !row.availability?.comment?.trim())
                       .map(({ player }) => (
-                        <span
-                          className="rounded-lg bg-base-200 px-2 py-1 text-sm font-semibold text-petrol-900"
+                        <PlayerPill
+                          isCurrentPlayer={player.id === selectedPlayerId}
                           key={player.id}
-                        >
-                          {player.name}
-                        </span>
+                          player={player}
+                        />
                       ))}
                   </div>
 
@@ -99,13 +100,12 @@ export function MatchDayDetailPage() {
                     {group.rows
                       .filter((row) => row.availability?.comment?.trim())
                       .map(({ player, availability }) => (
-                        <div
-                          className="flex flex-wrap items-baseline gap-x-1.5 rounded-lg bg-base-200 px-2 py-1.5 text-sm"
+                        <PlayerPill
+                          comment={availability?.comment}
+                          isCurrentPlayer={player.id === selectedPlayerId}
                           key={player.id}
-                        >
-                          <span className="font-bold text-petrol-900">{player.name}</span>
-                          <span className="italic text-base-content/70">{availability?.comment}</span>
-                        </div>
+                          player={player}
+                        />
                       ))}
                   </div>
                 </>

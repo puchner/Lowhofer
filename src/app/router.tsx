@@ -6,6 +6,7 @@ import { LeagueTablePage } from "../pages/LeagueTablePage";
 import { MatchDayDetailPage } from "../pages/MatchDayDetailPage";
 import { NewPollPage } from "../pages/NewPollPage";
 import { PlayersPage } from "../pages/PlayersPage";
+import { ProfilePage } from "../pages/ProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: "match-days/:matchDayId", element: <MatchDayDetailPage /> },
       { path: "admin/match-days/:matchDayId", element: <Navigate replace to="/" /> },
       { path: "players", element: <PlayersPage /> },
+      { path: "profile", element: <ProfilePage /> },
     ],
   },
 ]);

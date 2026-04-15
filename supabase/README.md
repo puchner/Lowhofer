@@ -14,6 +14,8 @@ Aktueller Stand:
   - `updated_at`-Trigger
   - Indizes fuer die geplanten API-Zugriffe
   - RLS aktiviert, ohne Browser-Policies
+- `202604160002_add_player_avatars.sql`
+  - Avatar-Metadaten fuer generierte Spieler-Avatare
 
 ## Seeds
 

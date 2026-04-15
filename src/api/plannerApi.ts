@@ -7,6 +7,12 @@ interface ApiPlayer {
   displayName: string;
   gender: Player["gender"];
   isAdmin: boolean;
+  avatar?: {
+    kind: "generated" | "uploaded";
+    style?: string;
+    seed?: string;
+    url?: string;
+  };
   positions: Array<{
     position: "setter" | "outside" | "middle" | "opposite" | "libero";
     isPrimary: boolean;
@@ -139,5 +145,6 @@ function mapApiPlayer(player: ApiPlayer): Player {
     gender: player.gender,
     positions,
     primaryPosition: primaryPosition ? positionByApiValue[primaryPosition.position] : positions[0],
+    avatar: player.avatar,
   };
 }

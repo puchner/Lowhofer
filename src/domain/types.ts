@@ -19,12 +19,20 @@ export enum AvailabilityStatus {
   Unknown = "keine Rückmeldung",
 }
 
+export interface PlayerAvatar {
+  kind: "generated" | "uploaded";
+  style?: string;
+  seed?: string;
+  url?: string;
+}
+
 export interface Player {
   id: string;
   name: string;
   gender: Gender;
   positions: Position[];
   primaryPosition?: Position;
+  avatar?: PlayerAvatar;
   notes?: string;
 }
 

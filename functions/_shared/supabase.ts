@@ -10,6 +10,10 @@ interface TeamSettingsPasswordRow {
   team_password_hash: string;
 }
 
+const playerSelect =
+  "id,display_name,gender,is_active,is_admin,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,created_at,updated_at";
+const legacyPlayerSelect = "id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at";
+
 export async function getTeamPasswordHash(env: CloudflareEnv): Promise<string | null> {
   const rows = await supabaseFetch<TeamSettingsPasswordRow[]>(env, "/team_settings?select=team_password_hash&limit=1");
 
@@ -17,9 +21,10 @@ export async function getTeamPasswordHash(env: CloudflareEnv): Promise<string | 
 }
 
 export async function listActivePlayers(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
-  return supabaseFetch<DbPlayerWithPositions[]>(
+  return supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
     env,
-    "/players?select=id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at,player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc",
+    `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
+    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
   );
 }
 
@@ -32,6 +37,68 @@ export async function getActivePlayer(env: CloudflareEnv, playerId: string): Pro
   );
 
   return rows[0] ?? null;
+}
+
+export async function getPlayerWithPositions(
+  env: CloudflareEnv,
+  playerId: string,
+): Promise<DbPlayerWithPositions | null> {
+  const rows = await supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
+    env,
+    `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&id=eq.${encodeURIComponent(
+      playerId,
+    )}&is_active=eq.true&limit=1`,
+    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&id=eq.${encodeURIComponent(
+      playerId,
+    )}&is_active=eq.true&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function updatePlayerCoreProfile(
+  env: CloudflareEnv,
+  playerId: string,
+  patch: Record<string, unknown>,
+): Promise<DbPlayerRow | null> {
+  const rows = await supabaseFetch<DbPlayerRow[]>(env, `/players?id=eq.${encodeURIComponent(playerId)}`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(patch),
+  });
+
+  return rows[0] ?? null;
+}
+
+export async function replacePlayerPositions(
+  env: CloudflareEnv,
+  playerId: string,
+  positions: Array<{ position: string; is_primary: boolean }>,
+): Promise<void> {
+  await supabaseFetch<void>(env, `/player_positions?player_id=eq.${encodeURIComponent(playerId)}`, {
+    method: "DELETE",
+  });
+
+  if (positions.length === 0) {
+    return;
+  }
+
+  await supabaseFetch<void>(env, "/player_positions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(
+      positions.map((position) => ({
+        player_id: playerId,
+        position: position.position,
+        is_primary: position.is_primary,
+      })),
+    ),
+  });
 }
 
 export async function listPolls(env: CloudflareEnv): Promise<DbAvailabilityPollRow[]> {
@@ -266,4 +333,20 @@ export async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: R
   }
 
   return JSON.parse(text) as T;
+}
+
+async function supabaseFetchWithLegacyPlayerFallback<T>(
+  env: CloudflareEnv,
+  path: string,
+  legacyPath: string,
+): Promise<T> {
+  try {
+    return await supabaseFetch<T>(env, path);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("avatar_")) {
+      return supabaseFetch<T>(env, legacyPath);
+    }
+
+    throw error;
+  }
 }

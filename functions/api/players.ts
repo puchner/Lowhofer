@@ -11,6 +11,13 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ env }) => {
       displayName: player.display_name,
       gender: player.gender,
       isAdmin: player.is_admin,
+      avatar: player.avatar_kind
+        ? {
+            kind: player.avatar_kind,
+            style: player.avatar_style ?? undefined,
+            seed: player.avatar_seed ?? undefined,
+          }
+        : undefined,
       positions: (player.player_positions ?? []).map((position) => ({
         position: position.position,
         isPrimary: position.is_primary,

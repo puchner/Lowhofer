@@ -14,6 +14,10 @@ export interface DbPlayerRow {
   is_active: boolean;
   is_admin: boolean;
   sort_order: number;
+  avatar_kind?: "generated" | "uploaded";
+  avatar_style?: string | null;
+  avatar_seed?: string | null;
+  avatar_storage_path?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -114,6 +118,13 @@ export function mapDbPlayerToPlayer(row: DbPlayerWithPositions): Player {
     gender: row.gender as Gender,
     positions,
     primaryPosition: primaryPosition ? dbPositionToPosition(primaryPosition.position) : positions[0],
+    avatar: row.avatar_kind
+      ? {
+          kind: row.avatar_kind,
+          style: row.avatar_style ?? undefined,
+          seed: row.avatar_seed ?? undefined,
+        }
+      : undefined,
   };
 }
 

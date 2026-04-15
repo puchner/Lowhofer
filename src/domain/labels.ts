@@ -3,8 +3,8 @@ import { AvailabilityStatus, Gender, Position } from "./types";
 export const positionLabels = Object.values(Position);
 
 export const genderLabel: Record<Gender, string> = {
-  [Gender.Female]: "Dame",
-  [Gender.Male]: "Herr",
+  [Gender.Female]: "Madl",
+  [Gender.Male]: "Bua",
   [Gender.Diverse]: "Divers",
 };
 
