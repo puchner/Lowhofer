@@ -16,14 +16,39 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
     return jsonResponse({ error: "password_required" }, { status: 400 });
   }
 
-  const storedHash = await getTeamPasswordHash(env);
+  let storedHash: string | null;
 
-  if (!storedHash || !(await verifyPassword(password, storedHash))) {
+  try {
+    storedHash = await getTeamPasswordHash(env);
+  } catch (error) {
+    console.error("Could not load team password hash.", error);
+
+    return jsonResponse({ error: "team_settings_unavailable" }, { status: 503 });
+  }
+
+  let isPasswordValid = false;
+
+  try {
+    isPasswordValid = storedHash ? await verifyPassword(password, storedHash) : false;
+  } catch (error) {
+    console.error("Could not verify team password hash.", error);
+
+    return jsonResponse({ error: "password_hash_invalid" }, { status: 500 });
+  }
+
+  if (!isPasswordValid) {
     return jsonResponse({ error: "invalid_password" }, { status: 401 });
   }
 
   const headers = new Headers();
-  headers.append("set-cookie", await createSessionCookie(request, env));
+
+  try {
+    headers.append("set-cookie", await createSessionCookie(request, env));
+  } catch (error) {
+    console.error("Could not create session cookie.", error);
+
+    return jsonResponse({ error: "session_cookie_failed" }, { status: 500 });
+  }
 
   return jsonResponse({ isAuthenticated: true, selectedPlayerId: null }, { headers });
 };
