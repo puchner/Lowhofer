@@ -220,6 +220,7 @@ values (
 on conflict (id) do update
 set team_name = excluded.team_name,
     team_slogan = excluded.team_slogan,
+    team_password_hash = excluded.team_password_hash,
     minimum_yes_players = excluded.minimum_yes_players,
     mixed_minimum_women_on_field = excluded.mixed_minimum_women_on_field,
     libero_counts_as_full_woman = excluded.libero_counts_as_full_woman,
