@@ -82,6 +82,8 @@ Hash erzeugen:
 npm run hash:password -- "DEIN_TEAM_PASSWORT"
 ```
 
+Der erzeugte Hash beginnt danach mit `pbkdf2-sha256$100000$`. Hohe Iterationswerte wie `210000` sind in Cloudflare Pages Functions hier nicht lauffaehig.
+
 Danach im Seed den Platzhalter ersetzen oder nach dem Seed in Supabase aktualisieren:
 
 ```sql

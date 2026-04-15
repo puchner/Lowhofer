@@ -21,7 +21,7 @@ Fachlich gesetzt:
 
 Noch außerhalb der IDE offen:
 - Team-Passwort festlegen
-- Passwort-Hash mit `npm run hash:password -- "DEIN_TEAM_PASSWORT"` erzeugen
+- Passwort-Hash mit `npm run hash:password -- "DEIN_TEAM_PASSWORT"` erzeugen; das Script nutzt Cloudflare-kompatible `100000` PBKDF2-Iterationen
 - Seed-Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder `team_settings.team_password_hash` nach dem Seed per SQL aktualisieren
 - Seed in Supabase ausführen
 - `SESSION_SECRET`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` in Cloudflare setzen bzw. prüfen
@@ -115,7 +115,7 @@ Diese Systemgrenze soll dokumentiert, aber nicht technisch weiter gehärtet werd
 ## Passwort-Hashing
 Für Cloudflare-konforme, schlanke Umsetzung:
 - WebCrypto
-- PBKDF2
+- PBKDF2 mit maximal `100000` Iterationen, weil Cloudflare Pages Functions hoehere Werte in dieser Runtime ablehnt
 - Salt
 - sicherer Vergleich
 

@@ -55,6 +55,8 @@ Der Passwort-Hash kann nach Paket 3 lokal erzeugt werden:
 npm run hash:password -- "DEIN_TEAM_PASSWORT"
 ```
 
+Das Script verwendet bewusst `100000` PBKDF2-Iterationen, weil Cloudflare Pages Functions in der verwendeten Runtime hoehere Werte ablehnt.
+
 Dann entweder vor dem Seed den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder nach dem Seed per SQL aktualisieren:
 
 ```sql

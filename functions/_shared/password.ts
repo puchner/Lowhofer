@@ -21,7 +21,7 @@ export async function verifyPassword(password: string, storedHash: string): Prom
   return timingSafeEqual(actualHash, expectedHash);
 }
 
-export async function createPasswordHash(password: string, salt: Uint8Array, iterations = 210_000): Promise<string> {
+export async function createPasswordHash(password: string, salt: Uint8Array, iterations = 100_000): Promise<string> {
   const hash = await derivePasswordHash(password, salt, iterations, 256);
 
   return `${HASH_PREFIX}$${iterations}$${bytesToBase64(salt)}$${bytesToBase64(hash)}`;

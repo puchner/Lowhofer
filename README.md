@@ -58,7 +58,7 @@ Paket 3 schuetzt die App ueber ein gemeinsames Team-Passwort und speichert den a
 
 - Session-Endpunkte liegen unter `functions/api/session/*`.
 - `GET /api/players` liefert die aktive Spielerliste fuer die Spielerwahl.
-- Passwort-Hashes werden mit PBKDF2/SHA-256 erzeugt.
+- Passwort-Hashes werden mit PBKDF2/SHA-256 erzeugt. Cloudflare Pages Functions unterstuetzt in dieser Runtime maximal 100.000 PBKDF2-Iterationen; das Hash-Script erzeugt deshalb kompatible Hashes mit `100000`.
 
 Hash fuer das Team-Passwort erzeugen:
 

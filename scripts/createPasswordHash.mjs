@@ -3,7 +3,7 @@ import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 
 const HASH_PREFIX = "pbkdf2-sha256";
-const ITERATIONS = 210_000;
+const ITERATIONS = 100_000;
 const SALT_BYTES = 16;
 const HASH_BYTES = 32;
 
