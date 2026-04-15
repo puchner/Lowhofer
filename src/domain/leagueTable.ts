@@ -62,12 +62,28 @@ function applyLowhoferOutcome(
 function applyResult(standing: LeagueStanding, setsWon: number, setsLost: number): LeagueStanding {
   return {
     ...standing,
-    points: standing.points + setsWon,
+    points: standing.points + getMatchPoints(setsWon, setsLost),
     wins: standing.wins + (setsWon === 2 ? 1 : 0),
     setsWon: standing.setsWon + setsWon,
     setsLost: standing.setsLost + setsLost,
     games: standing.games + 1,
   };
+}
+
+function getMatchPoints(setsWon: number, setsLost: number): number {
+  if (setsWon === 2 && setsLost === 0) {
+    return 3;
+  }
+
+  if (setsWon === 2 && setsLost === 1) {
+    return 2;
+  }
+
+  if (setsWon === 1 && setsLost === 2) {
+    return 1;
+  }
+
+  return 0;
 }
 
 function getTeamRank(standings: LeagueStanding[], teamName: string): number {
