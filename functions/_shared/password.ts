@@ -9,8 +9,8 @@ export async function verifyPassword(password: string, storedHash: string): Prom
   }
 
   const iterations = Number(parts[1]);
-  const salt = base64ToBytes(parts[2]);
-  const expectedHash = base64ToBytes(parts[3]);
+  const salt = base64ToBytes(parts[2], "salt");
+  const expectedHash = base64ToBytes(parts[3], "hash");
 
   if (!Number.isInteger(iterations) || iterations < 100_000 || expectedHash.byteLength === 0) {
     return false;
@@ -68,8 +68,14 @@ function timingSafeEqual(left: Uint8Array, right: Uint8Array): boolean {
   return difference === 0;
 }
 
-function base64ToBytes(value: string): Uint8Array {
-  return Uint8Array.from(atob(value.replaceAll(/\s/g, "")), (char) => char.charCodeAt(0));
+function base64ToBytes(value: string, label: "salt" | "hash"): Uint8Array {
+  const normalizedValue = value.replace(/\s/g, "");
+
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(normalizedValue) || normalizedValue.length % 4 !== 0) {
+    throw new Error(`invalid_${label}_base64`);
+  }
+
+  return Uint8Array.from(atob(normalizedValue), (char) => char.charCodeAt(0));
 }
 
 function bytesToBase64(value: Uint8Array): string {

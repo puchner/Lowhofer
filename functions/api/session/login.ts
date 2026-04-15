@@ -33,7 +33,13 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
   } catch (error) {
     console.error("Could not verify team password hash.", error);
 
-    return jsonResponse({ error: "password_hash_invalid" }, { status: 500 });
+    return jsonResponse(
+      {
+        error: "password_hash_invalid",
+        reason: error instanceof Error ? error.message : "unknown",
+      },
+      { status: 500 },
+    );
   }
 
   if (!isPasswordValid) {
