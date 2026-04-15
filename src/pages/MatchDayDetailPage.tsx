@@ -10,17 +10,13 @@ import { TrafficLight } from "../components/ui/TrafficLight";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
-interface MatchDayDetailPageProps {
-  isAdmin?: boolean;
-}
-
-export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps) {
+export function MatchDayDetailPage() {
   const { matchDayId } = useParams();
   const { deletePoll, matchDays, players, updatePoll } = usePlanner();
   const { selectedPlayerIsAdmin } = useSession();
   const [statusFilter, setStatusFilter] = useState<AvailabilityStatus | "all">("all");
   const matchDay = matchDays.find((item) => item.id === matchDayId);
-  const canAdmin = isAdmin && selectedPlayerIsAdmin;
+  const canAdmin = selectedPlayerIsAdmin;
 
   const playerRows = useMemo(() => {
     if (!matchDay) {
@@ -53,7 +49,7 @@ export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps)
     <section className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Link className="link link-primary text-sm" to={canAdmin ? "/admin" : "/"}>
+          <Link className="link link-primary text-sm" to="/">
             Zurück
           </Link>
           <h2 className="mt-2 text-3xl font-bold text-petrol-900">{matchDay.opponent}</h2>
@@ -65,7 +61,7 @@ export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps)
               {matchDay.type === "date-finding" ? (
                 <button
                   className="btn btn-sm btn-primary rounded-lg"
-                  onClick={() => updatePoll({ pollId: matchDay.id, type: "match" })}
+                  onClick={() => void updatePoll({ pollId: matchDay.id, type: "match" })}
                   type="button"
                 >
                   Zu Match machen
@@ -74,7 +70,7 @@ export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps)
               {matchDay.status === "open" ? (
                 <button
                   className="btn btn-sm rounded-lg bg-base-300"
-                  onClick={() => updatePoll({ pollId: matchDay.id, status: "archived" })}
+                  onClick={() => void updatePoll({ pollId: matchDay.id, status: "archived" })}
                   type="button"
                 >
                   Archivieren
@@ -82,7 +78,7 @@ export function MatchDayDetailPage({ isAdmin = false }: MatchDayDetailPageProps)
               ) : null}
               <button
                 className="btn btn-sm btn-error rounded-lg"
-                onClick={() => deletePoll(matchDay.id)}
+                onClick={() => void deletePoll(matchDay.id)}
                 type="button"
               >
                 Löschen

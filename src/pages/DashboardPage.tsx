@@ -7,16 +7,12 @@ import { AvailabilityStatus } from "../domain/types";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
-interface DashboardPageProps {
-  isAdmin?: boolean;
-}
-
-export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
-  const { deletePoll, matchDays, players, updateAvailability, updatePoll } = usePlanner();
+export function DashboardPage() {
+  const { deletePoll, error, isLoading, matchDays, players, updateAvailability, updatePoll } = usePlanner();
   const session = useSession();
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
   const activePlayerId = session.selectedPlayerId;
-  const canAdmin = isAdmin && session.selectedPlayerIsAdmin;
+  const canAdmin = session.selectedPlayerIsAdmin;
   const allUpcomingMatchDays = getAllUpcomingMatchDays(matchDays);
   const upcomingMatchDays = showAllMatchDays ? allUpcomingMatchDays : getUpcomingMatchDays(matchDays);
   const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
@@ -27,12 +23,20 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Kommende Spieltage</h2>
           {canAdmin ? (
-            <Link className="btn btn-secondary min-h-11 rounded-lg text-petrol-900" to="/admin/polls/new">
+            <Link className="btn btn-secondary min-h-11 rounded-lg text-petrol-900" to="/polls/new">
               + Abstimmung
             </Link>
           ) : null}
         </div>
       </div>
+
+      {error ? (
+        <section className="rounded-lg border border-error/30 bg-error/10 p-4 text-sm font-semibold text-error">
+          {error}
+        </section>
+      ) : null}
+
+      {isLoading ? <p className="rounded-lg bg-base-100 p-4 text-base-content/70">Lade Spieltage...</p> : null}
 
       <div className="grid gap-3">
         {upcomingMatchDays.map((matchDay) => {
@@ -49,7 +53,6 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
                     onChange={(status) =>
                       updateAvailability({
                         matchDayId: matchDay.id,
-                        playerId: activePlayerId,
                         status,
                       })
                     }
@@ -60,14 +63,14 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
                   <div className="mt-2 grid grid-cols-2 gap-2">
                     <button
                       className="btn btn-sm rounded-lg bg-base-300"
-                      onClick={() => updatePoll({ pollId: matchDay.id, status: "archived" })}
+                      onClick={() => void updatePoll({ pollId: matchDay.id, status: "archived" })}
                       type="button"
                     >
                       Archiv
                     </button>
                     <button
                       className="btn btn-sm btn-error rounded-lg"
-                      onClick={() => deletePoll(matchDay.id)}
+                      onClick={() => void deletePoll(matchDay.id)}
                       type="button"
                     >
                       Löschen
@@ -80,7 +83,7 @@ export function DashboardPage({ isAdmin = false }: DashboardPageProps) {
           return (
             <MatchDayCard
               action={cardAction}
-              detailPath={canAdmin ? `/admin/match-days/${matchDay.id}` : `/match-days/${matchDay.id}`}
+              detailPath={`/match-days/${matchDay.id}`}
               key={matchDay.id}
               matchDay={matchDay}
               players={players}

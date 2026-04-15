@@ -60,6 +60,13 @@ Bereits durch Paket 3 erledigt:
 - Passwort-Hash-Script `npm run hash:password` ergänzt
 - Pia und Volker als initiale Admins im Seed gesetzt
 
+Bereits durch Paket 4 erledigt:
+- kombinierter Login aus Spielerwahl und Team-Passwort umgesetzt
+- freier Spielerwechsel im Header entfernt; Wechsel nur über `Ich bin nicht <Name>`
+- separate Admin-UX durch bedingt sichtbare Admin-Funktionen im normalen UI ersetzt
+- Polls, Poll-Details, Poll-Anlage, Status-/Archiv-/Delete-Aktionen und Responses auf `/api/*` + Supabase umgestellt
+- Response-Writes verwenden serverseitig den Session-Spieler statt einer Frontend-`playerId`
+
 ### Mittel
 - `MatchDay` schrittweise in `AvailabilityPoll` überführen
 - Detailseite mobile-first verbessern
@@ -77,7 +84,7 @@ Die erste Version gilt als fertig, wenn:
 1. die App über Cloudflare Pages läuft
 2. die App durch Team-Passwort geschützt ist
 3. der aktive Spieler serverseitig in der Session gespeichert wird
-4. Spieler, Polls und Responses in Supabase persistieren; Schema und Seed sind vorbereitet, API-Anbindung folgt in Paket 4
+4. Spieler, Polls und Responses in Supabase persistieren
 5. Responses nur für den aktuell in der Session gewählten Spieler geschrieben werden
 6. Admin Polls anlegen/bearbeiten/löschen bzw. archivieren kann
 7. `homeAway` korrekt persistiert und genutzt wird

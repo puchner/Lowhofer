@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
 import { DashboardPage } from "../pages/DashboardPage";
 import { LeagueTablePage } from "../pages/LeagueTablePage";
@@ -12,11 +12,12 @@ export const router = createBrowserRouter([
     element: <AppShell />,
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: "admin", element: <DashboardPage isAdmin /> },
+      { path: "admin", element: <Navigate replace to="/" /> },
       { path: "table", element: <LeagueTablePage /> },
-      { path: "admin/polls/new", element: <NewPollPage /> },
+      { path: "polls/new", element: <NewPollPage /> },
+      { path: "admin/polls/new", element: <Navigate replace to="/polls/new" /> },
       { path: "match-days/:matchDayId", element: <MatchDayDetailPage /> },
-      { path: "admin/match-days/:matchDayId", element: <MatchDayDetailPage isAdmin /> },
+      { path: "admin/match-days/:matchDayId", element: <Navigate replace to="/" /> },
       { path: "players", element: <PlayersPage /> },
     ],
   },

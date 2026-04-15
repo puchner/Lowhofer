@@ -131,12 +131,13 @@ Da ihr bewusst mit einem gemeinsamen Team-Passwort arbeitet, musst du dieses ein
 
 ### 13. Produktiv testen
 Diese Dinge solltest du selbst einmal bewusst durchklicken:
-- Passwort-Gate
-- Spielerwahl
+- kombinierter Login aus Spielerwahl und Team-Passwort
+- `Ich bin nicht <Name>` beendet die Session und führt zurück zum Login
 - eigene Zu-/Absage
 - Response-Persistenz in einem zweiten Browser oder auf einem zweiten Gerät
 - Admin: Termin anlegen
 - Admin: Termin löschen / archivieren
+- Nicht-Admin: keine Admin-Aktionen sichtbar
 - Tabellen-Tab
 - Liga-Termine beim Anlegen laden
 - Verhalten bei Reload / neuem Browser

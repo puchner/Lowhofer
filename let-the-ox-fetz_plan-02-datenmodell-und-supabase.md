@@ -9,12 +9,14 @@ Erstellt wurden:
 - `supabase/README.md`
 - `src/data/supabaseMappers.ts`
 
-Noch außerhalb der IDE offen:
-- Migration und Seed im Supabase-Projekt ausführen oder Workflow verbinden
-- Spielerliste fachlich bestätigen (erledigt: Liste passt)
-- Admin-Spieler festlegen (erledigt: Pia und Volker)
-- Team-Passwort-Hash erzeugen und den Seed-Platzhalter ersetzen
-- Liga-URLs in `team_settings` prüfen
+Außerhalb der IDE erledigt:
+- Migration und Seed im Supabase-Projekt ausgeführt
+- Spielerliste fachlich bestätigt
+- Admin-Spieler festgelegt: Pia und Volker
+- Team-Passwort-Hash gesetzt
+
+Weiterhin bei Bedarf manuell prüfbar:
+- Liga-URLs in `team_settings`
 
 ## Ziel
 Die bisherige LocalStorage-/Mock-Persistenz durch ein relationales Datenmodell in Supabase ersetzen.

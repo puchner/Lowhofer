@@ -1,5 +1,35 @@
 # Paket 4 – API und Frontend-Migration
 
+## Status
+Im Repo umgesetzt.
+
+Erstellt bzw. angepasst wurden:
+- `functions/_shared/auth.ts`
+- `functions/_shared/pollMapping.ts`
+- `functions/api/polls.ts`
+- `functions/api/polls/[pollId].ts`
+- `functions/api/polls/[pollId]/response.ts`
+- `src/api/plannerApi.ts`
+- `src/state/PlannerContext.tsx`
+- `src/session/*`
+- `src/app/router.tsx`
+- Dashboard-, Detail- und Poll-Anlage-Seiten
+
+Erledigt:
+- kombinierter Login mit `password` + `playerId`
+- kein freier Spielerwechsel im Header
+- `Ich bin nicht <Name>` beendet die Session
+- `/admin`-Routen werden nicht mehr als eigener Produktbereich genutzt
+- Admin-Funktionen erscheinen auf normalen Seiten, wenn der aktive Spieler Admin ist
+- Polls und Responses laufen ueber `/api/*` gegen Supabase
+- Response-Write nutzt serverseitig `selectedPlayerId` aus der Session
+- Admin-Schreibaktionen werden serverseitig geprueft
+
+Noch bewusst offen fuer spaetere Pakete:
+- komfortable Spieler-Stammdatenpflege im UI
+- Poll-Bearbeitung ueber Formular statt Status-/Archiv-Aktionen
+- Liga-Fixture-Auswahl weiterhin aus lokalem Import, bis Paket 5 die Liga-API liefert
+
 ## Ziel
 Die bestehende App schrittweise von LocalStorage/Mock-Daten auf die neue API-Schicht umstellen.
 
@@ -72,25 +102,25 @@ Für den MVP:
 - [x] `POST /api/session/logout`
 
 Paket-4-Anpassung:
-- `POST /api/session/login` um `playerId` erweitern, damit Login und Spielerwahl in einem Schritt möglich sind
-- Frontend soll `POST /api/session/player` nicht mehr als normalen Wechselmechanismus verwenden
+- [x] `POST /api/session/login` um `playerId` erweitern, damit Login und Spielerwahl in einem Schritt möglich sind
+- [x] Frontend verwendet `POST /api/session/player` nicht mehr als normalen Wechselmechanismus
 
 ### Spieler
 - [x] `GET /api/players`
-- `POST /api/players` (admin)
-- `PATCH /api/players/:id` (admin)
+- `POST /api/players` (admin; spaetere Stammdatenpflege)
+- `PATCH /api/players/:id` (admin; spaetere Stammdatenpflege)
 
 ### Polls
-- `GET /api/polls`
-- `GET /api/polls/:id`
-- `POST /api/polls` (admin)
-- `PATCH /api/polls/:id` (admin)
-- `DELETE /api/polls/:id` oder Status-/Archivlösung (admin)
+- [x] `GET /api/polls`
+- [x] `GET /api/polls/:id`
+- [x] `POST /api/polls` (admin)
+- [x] `PATCH /api/polls/:id` (admin)
+- [x] `DELETE /api/polls/:id` oder Status-/Archivlösung (admin)
 
 ### Responses
 Wichtige Anpassung:
 - statt `PUT /api/polls/:pollId/responses/:playerId`
-- lieber `PUT /api/polls/:pollId/response`
+- [x] lieber `PUT /api/polls/:pollId/response`
 
 Der Spieler wird serverseitig aus der Session ermittelt.
 
@@ -103,32 +133,32 @@ Der Spieler wird serverseitig aus der Session ermittelt.
 
 ### Schritt 1
 Session-Gate auf kombinierten Login umbauen:
-- Spielerwahl und Passwort in einem Einstieg
-- keine freie Spieler-Auswahl im Header nach Login
-- Header zeigt aktiven Spieler und `Ich bin nicht <Name>`
+- [x] Spielerwahl und Passwort in einem Einstieg
+- [x] keine freie Spieler-Auswahl im Header nach Login
+- [x] Header zeigt aktiven Spieler und `Ich bin nicht <Name>`
 
 ### Schritt 2
 Admin-Routen abbauen:
-- `/admin` und `/admin/*` entfernen oder auf normale Routen umleiten
-- Admin-Funktionen auf normalen Seiten bedingt anzeigen
+- [x] `/admin` und `/admin/*` entfernen oder auf normale Routen umleiten
+- [x] Admin-Funktionen auf normalen Seiten bedingt anzeigen
 
 ### Schritt 3
-Spielerliste aus API laden und als Grundlage für Login-Vorauswahl und Kaderansicht nutzen
+- [x] Spielerliste aus API laden und als Grundlage für Login-Vorauswahl und Kaderansicht nutzen
 
 ### Schritt 4
-Poll-Liste und Poll-Details aus API laden
+- [x] Poll-Liste und Poll-Details aus API laden
 
 ### Schritt 5
 AvailabilityButtons auf API-Write umstellen:
-- kein `playerId` aus dem Frontend senden
-- API nutzt `selectedPlayerId` aus Session
+- [x] kein `playerId` aus dem Frontend senden
+- [x] API nutzt `selectedPlayerId` aus Session
 
 ### Schritt 6
 Admin-Aktionen auf API umstellen:
-- create
-- edit
-- archive/delete
-- Adminrechte serverseitig prüfen
+- [x] create
+- [x] edit/status
+- [x] archive/delete
+- [x] Adminrechte serverseitig prüfen
 
 ## LocalStorage-Abbau
 Nach erfolgreicher Umstellung darf LocalStorage nur noch halten:
@@ -152,12 +182,12 @@ Diese Dateien sollen über Mapper/API-Daten gespeist werden, aber keine Infrastr
 Das bereits angelegte Mapping in `src/data/supabaseMappers.ts` soll dafür genutzt oder serverseitig gespiegelt werden, statt neue Status-/Datums-Mappings verteilt einzubauen.
 
 ## Deliverables
-- Polls/Spieler/Responses laufen über API
-- PlannerContext oder Nachfolger nutzt API statt LocalStorage als Primärquelle
-- Login wählt Spieler und Passwort zusammen
-- aktiver Spieler ist nach Login nicht frei wechselbar
-- Admin-Funktionen sind in normalen Routen integriert statt über separaten Admin-Bereich
-- bestehende UI bleibt in Layout und Fachlogik weitgehend erhalten
+- [x] Polls/Spieler/Responses laufen über API
+- [x] PlannerContext oder Nachfolger nutzt API statt LocalStorage als Primärquelle
+- [x] Login wählt Spieler und Passwort zusammen
+- [x] aktiver Spieler ist nach Login nicht frei wechselbar
+- [x] Admin-Funktionen sind in normalen Routen integriert statt über separaten Admin-Bereich
+- [x] bestehende UI bleibt in Layout und Fachlogik weitgehend erhalten
 
 ## Hinweise für den Agent
 - möglichst keine unnötigen Komplett-Rewrites

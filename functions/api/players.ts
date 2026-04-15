@@ -1,15 +1,8 @@
 import { CloudflareEnv } from "../_shared/env";
 import { jsonResponse } from "../_shared/http";
-import { readSession } from "../_shared/session";
 import { listActivePlayers } from "../_shared/supabase";
 
-export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
-  const session = await readSession(request, env);
-
-  if (!session) {
-    return jsonResponse({ error: "not_authenticated" }, { status: 401 });
-  }
-
+export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ env }) => {
   const players = await listActivePlayers(env);
 
   return jsonResponse({

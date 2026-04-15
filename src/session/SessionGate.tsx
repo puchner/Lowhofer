@@ -1,22 +1,21 @@
-import { FormEvent, PropsWithChildren, useEffect, useState } from "react";
+import { FormEvent, PropsWithChildren, useMemo, useState } from "react";
 import { useSession } from "./sessionStore";
 
 export function SessionGate({ children }: PropsWithChildren) {
   const session = useSession();
-  const { isAuthenticated, selectPlayer, selectedPlayerId } = session;
   const [password, setPassword] = useState("");
+  const [selectedPlayerId, setSelectedPlayerId] = useState(() => {
+    return window.localStorage.getItem("lowhofer.lastSelectedPlayerId") ?? "";
+  });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    const lastSelectedPlayerId = window.localStorage.getItem("lowhofer.lastSelectedPlayerId");
-
-    if (isAuthenticated && !selectedPlayerId && lastSelectedPlayerId) {
-      void selectPlayer(lastSelectedPlayerId).catch(() => {
-        window.localStorage.removeItem("lowhofer.lastSelectedPlayerId");
-      });
+  const resolvedSelectedPlayerId = useMemo(() => {
+    if (session.players.some((player) => player.id === selectedPlayerId)) {
+      return selectedPlayerId;
     }
-  }, [isAuthenticated, selectPlayer, selectedPlayerId]);
+
+    return session.players[0]?.id ?? "";
+  }, [selectedPlayerId, session.players]);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,10 +23,10 @@ export function SessionGate({ children }: PropsWithChildren) {
     setIsSubmitting(true);
 
     try {
-      await session.login(password);
+      await session.login(password, resolvedSelectedPlayerId);
       setPassword("");
     } catch {
-      setError("Das Team-Passwort passt nicht.");
+      setError("Spieler oder Team-Passwort passt nicht.");
     } finally {
       setIsSubmitting(false);
     }
@@ -37,10 +36,22 @@ export function SessionGate({ children }: PropsWithChildren) {
     return <FullPageMessage title="Lade Session..." text="Einen Moment." />;
   }
 
-  if (!session.isAuthenticated) {
+  if (!session.isAuthenticated || !session.selectedPlayerId) {
     return (
-      <AuthShell eyebrow="Lowhofer" title="Team-Passwort">
+      <AuthShell eyebrow="Lowhofer" title="Wer bist du?">
         <form className="space-y-4" onSubmit={handleLogin}>
+          <select
+            className="select select-bordered min-h-12 w-full rounded-lg"
+            disabled={session.players.length === 0}
+            onChange={(event) => setSelectedPlayerId(event.target.value)}
+            value={resolvedSelectedPlayerId}
+          >
+            {session.players.map((player) => (
+              <option key={player.id} value={player.id}>
+                {player.name}
+              </option>
+            ))}
+          </select>
           <input
             className="input input-bordered min-h-12 w-full rounded-lg"
             onChange={(event) => setPassword(event.target.value)}
@@ -49,7 +60,10 @@ export function SessionGate({ children }: PropsWithChildren) {
             value={password}
           />
           {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
-          <button className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900" disabled={isSubmitting}>
+          <button
+            className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900"
+            disabled={isSubmitting || !resolvedSelectedPlayerId}
+          >
             Einloggen
           </button>
         </form>
@@ -57,51 +71,7 @@ export function SessionGate({ children }: PropsWithChildren) {
     );
   }
 
-  if (!session.selectedPlayerId) {
-    return (
-      <AuthShell eyebrow="Spielerwahl" title="Wer bist du?">
-        <PlayerSelection />
-      </AuthShell>
-    );
-  }
-
   return children;
-}
-
-function PlayerSelection() {
-  const session = useSession();
-  const [error, setError] = useState<string | null>(null);
-
-  async function selectPlayer(playerId: string) {
-    setError(null);
-
-    try {
-      await session.selectPlayer(playerId);
-    } catch {
-      setError("Dieser Spieler konnte nicht ausgewählt werden.");
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-2 sm:grid-cols-2">
-        {session.players.map((player) => (
-          <button
-            className="min-h-12 rounded-lg bg-base-200 px-4 text-left font-bold text-petrol-900 hover:bg-base-300"
-            key={player.id}
-            onClick={() => selectPlayer(player.id)}
-            type="button"
-          >
-            {player.name}
-          </button>
-        ))}
-      </div>
-      {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
-      <button className="btn btn-ghost min-h-11 w-full rounded-lg" onClick={() => session.logout()} type="button">
-        Abmelden
-      </button>
-    </div>
-  );
 }
 
 function AuthShell({ children, eyebrow, title }: PropsWithChildren<{ eyebrow: string; title: string }>) {

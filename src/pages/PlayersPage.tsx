@@ -11,7 +11,7 @@ export function PlayersPage() {
         <p className="text-sm font-semibold uppercase text-primary">Kader</p>
         <h2 className="text-3xl font-bold text-petrol-900">Spielerverwaltung</h2>
         <p className="mt-2 max-w-2xl text-base-content/70">
-          Stammdaten sind im MVP Mock-Daten. Mehrfachpositionen und Hauptpositionen sind bereits vorbereitet.
+          Stammdaten kommen aus Supabase. Mehrfachpositionen und Hauptpositionen sind bereits vorbereitet.
         </p>
       </div>
 

@@ -19,12 +19,12 @@ Fachlich gesetzt:
 - Pia und Volker sind im Seed Admins.
 - Die Spieler-UUIDs der Mock-Daten wurden an den Seed angeglichen, damit Session-Spielerwahl und lokale MVP-Daten bis Paket 4 konsistent bleiben.
 
-Noch außerhalb der IDE offen:
-- Team-Passwort festlegen
-- Passwort-Hash mit `npm run hash:password -- "DEIN_TEAM_PASSWORT"` erzeugen; das Script nutzt Cloudflare-kompatible `100000` PBKDF2-Iterationen
-- Seed-Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder `team_settings.team_password_hash` nach dem Seed per SQL aktualisieren
-- Seed in Supabase ausführen
-- `SESSION_SECRET`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` in Cloudflare setzen bzw. prüfen
+Außerhalb der IDE erledigt:
+- Team-Passwort festgelegt
+- Passwort-Hash mit Cloudflare-kompatiblen `100000` PBKDF2-Iterationen erzeugt und gesetzt
+- Seed in Supabase ausgeführt
+- `SESSION_SECRET`, `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` in Cloudflare gesetzt
+- Login produktiv erfolgreich getestet
 
 ## Ziel
 Die App mit einem gemeinsamen Team-Passwort schützen und danach den aktiv ausgewählten Spieler **serverseitig** an die Session binden.

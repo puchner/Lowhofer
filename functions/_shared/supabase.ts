@@ -1,4 +1,9 @@
-import type { DbPlayerRow, DbPlayerWithPositions } from "../../src/data/supabaseMappers";
+import type {
+  DbAvailabilityPollRow,
+  DbAvailabilityResponseRow,
+  DbPlayerRow,
+  DbPlayerWithPositions,
+} from "../../src/data/supabaseMappers";
 import { CloudflareEnv, getRequiredEnv } from "./env";
 
 interface TeamSettingsPasswordRow {
@@ -29,7 +34,120 @@ export async function getActivePlayer(env: CloudflareEnv, playerId: string): Pro
   return rows[0] ?? null;
 }
 
-async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: RequestInit = {}): Promise<T> {
+export async function listPolls(env: CloudflareEnv): Promise<DbAvailabilityPollRow[]> {
+  return supabaseFetch<DbAvailabilityPollRow[]>(
+    env,
+    "/availability_polls?select=*&order=starts_at.asc.nullslast,created_at.asc",
+  );
+}
+
+export async function getPoll(env: CloudflareEnv, pollId: string): Promise<DbAvailabilityPollRow | null> {
+  const rows = await supabaseFetch<DbAvailabilityPollRow[]>(
+    env,
+    `/availability_polls?select=*&id=eq.${encodeURIComponent(pollId)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function listResponses(env: CloudflareEnv): Promise<DbAvailabilityResponseRow[]> {
+  return supabaseFetch<DbAvailabilityResponseRow[]>(
+    env,
+    "/availability_responses?select=*&order=updated_at.asc",
+  );
+}
+
+export async function listResponsesForPoll(
+  env: CloudflareEnv,
+  pollId: string,
+): Promise<DbAvailabilityResponseRow[]> {
+  return supabaseFetch<DbAvailabilityResponseRow[]>(
+    env,
+    `/availability_responses?select=*&poll_id=eq.${encodeURIComponent(pollId)}&order=updated_at.asc`,
+  );
+}
+
+export async function createPoll(
+  env: CloudflareEnv,
+  poll: Record<string, unknown>,
+): Promise<DbAvailabilityPollRow> {
+  const rows = await supabaseFetch<DbAvailabilityPollRow[]>(env, "/availability_polls", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(poll),
+  });
+
+  return rows[0];
+}
+
+export async function updatePoll(
+  env: CloudflareEnv,
+  pollId: string,
+  patch: Record<string, unknown>,
+): Promise<DbAvailabilityPollRow | null> {
+  const rows = await supabaseFetch<DbAvailabilityPollRow[]>(
+    env,
+    `/availability_polls?id=eq.${encodeURIComponent(pollId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        prefer: "return=representation",
+      },
+      body: JSON.stringify(patch),
+    },
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function deletePoll(env: CloudflareEnv, pollId: string): Promise<void> {
+  await supabaseFetch<void>(env, `/availability_polls?id=eq.${encodeURIComponent(pollId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function createResponses(
+  env: CloudflareEnv,
+  responses: Array<Record<string, unknown>>,
+): Promise<void> {
+  if (responses.length === 0) {
+    return;
+  }
+
+  await supabaseFetch<void>(env, "/availability_responses", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(responses),
+  });
+}
+
+export async function upsertResponse(
+  env: CloudflareEnv,
+  response: Record<string, unknown>,
+): Promise<DbAvailabilityResponseRow> {
+  const rows = await supabaseFetch<DbAvailabilityResponseRow[]>(
+    env,
+    "/availability_responses?on_conflict=poll_id,player_id",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        prefer: "resolution=merge-duplicates,return=representation",
+      },
+      body: JSON.stringify(response),
+    },
+  );
+
+  return rows[0];
+}
+
+export async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: RequestInit = {}): Promise<T> {
   const supabaseUrl = getRequiredEnv(env, "SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = getRequiredEnv(env, "SUPABASE_SERVICE_ROLE_KEY");
   const headers = new Headers(init.headers);
@@ -47,5 +165,15 @@ async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: RequestI
     throw new Error(`Supabase request failed: ${response.status} ${await response.text()}`);
   }
 
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const text = await response.text();
+
+  if (!text) {
+    return undefined as T;
+  }
+
+  return JSON.parse(text) as T;
 }

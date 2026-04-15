@@ -1,128 +1,116 @@
-import { PropsWithChildren, useEffect, useState } from "react";
-import { listLeagueFixtures, listMatchDays, listPlayers } from "../data/matchDayRepository";
-import { AvailabilityStatus, MatchDay } from "../domain/types";
+import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createPoll as createPollApi,
+  deletePoll as deletePollApi,
+  fetchPlayers,
+  fetchPolls,
+  updateAvailability as updateAvailabilityApi,
+  updatePoll as updatePollApi,
+} from "../api/plannerApi";
+import { listLeagueFixtures } from "../data/matchDayRepository";
+import { MatchDay, Player } from "../domain/types";
+import { useSession } from "../session/sessionStore";
 import { CreatePollInput, PlannerContext, UpdateAvailabilityInput, UpdatePollInput } from "./plannerStore";
 
-const MATCH_DAYS_STORAGE_KEY = "lowhofer.matchDays";
-
 export function PlannerProvider({ children }: PropsWithChildren) {
-  const players = listPlayers();
-  const leagueFixtures = listLeagueFixtures();
-  const [matchDays, setMatchDays] = useState<MatchDay[]>(loadInitialMatchDays);
+  const session = useSession();
+  const leagueFixtures = useMemo(() => listLeagueFixtures(), []);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [matchDays, setMatchDays] = useState<MatchDay[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    if (!session.isAuthenticated || !session.selectedPlayerId) {
+      setPlayers([]);
+      setMatchDays([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [nextPlayers, nextMatchDays] = await Promise.all([fetchPlayers(), fetchPolls()]);
+      setPlayers(nextPlayers);
+      setMatchDays(sortMatchDays(nextMatchDays));
+    } catch (nextError) {
+      setError(nextError instanceof Error ? nextError.message : "Daten konnten nicht geladen werden.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [session.isAuthenticated, session.selectedPlayerId]);
 
   useEffect(() => {
-    window.localStorage.setItem(MATCH_DAYS_STORAGE_KEY, JSON.stringify(matchDays));
-  }, [matchDays]);
+    void refresh();
+  }, [refresh]);
 
-  function updateAvailability({ matchDayId, playerId, status }: UpdateAvailabilityInput) {
-    // TODO: Hier später API-Update statt lokalem State ausführen.
+  async function updateAvailability({ matchDayId, status }: UpdateAvailabilityInput) {
+    const response = await updateAvailabilityApi(matchDayId, status);
+
     setMatchDays((currentMatchDays) =>
       currentMatchDays.map((matchDay) => {
         if (matchDay.id !== matchDayId) {
           return matchDay;
         }
 
+        const existingResponse = matchDay.availability.some(
+          (availability) => availability.playerId === response.playerId,
+        );
+
         return {
           ...matchDay,
-          availability: matchDay.availability.map((availability) =>
-            availability.playerId === playerId ? { ...availability, status } : availability,
-          ),
+          availability: existingResponse
+            ? matchDay.availability.map((availability) =>
+                availability.playerId === response.playerId ? response : availability,
+              )
+            : [...matchDay.availability, response],
         };
       }),
     );
   }
 
-  function createPoll(input: CreatePollInput): MatchDay {
-    const newPoll: MatchDay = {
-      ...input,
-      id: crypto.randomUUID(),
-      status: "open",
-      availability: players.map((player) => ({
-        matchDayId: "",
-        playerId: player.id,
-        status: AvailabilityStatus.Unknown,
-      })),
-    };
+  async function createPoll(input: CreatePollInput): Promise<MatchDay> {
+    const newPoll = await createPollApi(input);
 
-    newPoll.availability = newPoll.availability.map((availability) => ({
-      ...availability,
-      matchDayId: newPoll.id,
-    }));
-
-    setMatchDays((currentMatchDays) =>
-      [...currentMatchDays, newPoll].sort((a, b) => a.date.localeCompare(b.date)),
-    );
+    setMatchDays((currentMatchDays) => sortMatchDays([...currentMatchDays, newPoll]));
 
     return newPoll;
   }
 
-  function updatePoll({ pollId, status, type }: UpdatePollInput) {
-    // TODO: Hier später API-Update statt lokalem State ausführen.
+  async function updatePoll(input: UpdatePollInput) {
+    const updatedPoll = await updatePollApi(input);
+
     setMatchDays((currentMatchDays) =>
-      currentMatchDays.map((matchDay) =>
-        matchDay.id === pollId
-          ? {
-              ...matchDay,
-              status: status ?? matchDay.status,
-              type: type ?? matchDay.type,
-            }
-          : matchDay,
-      ),
+      sortMatchDays(currentMatchDays.map((matchDay) => (matchDay.id === updatedPoll.id ? updatedPoll : matchDay))),
     );
   }
 
-  function deletePoll(pollId: string) {
-    // TODO: Hier später API-Delete oder Archivierung statt lokalem State ausführen.
+  async function deletePoll(pollId: string) {
+    await deletePollApi(pollId);
     setMatchDays((currentMatchDays) => currentMatchDays.filter((matchDay) => matchDay.id !== pollId));
   }
 
-  // TODO: Hier später echte Auth berücksichtigen und Daten per Query laden.
   return (
     <PlannerContext.Provider
-      value={{ createPoll, deletePoll, leagueFixtures, players, matchDays, updateAvailability, updatePoll }}
+      value={{
+        createPoll,
+        deletePoll,
+        error,
+        isLoading,
+        leagueFixtures,
+        matchDays,
+        players,
+        refresh,
+        updateAvailability,
+        updatePoll,
+      }}
     >
       {children}
     </PlannerContext.Provider>
   );
 }
 
-function loadInitialMatchDays(): MatchDay[] {
-  const fallbackMatchDays = listMatchDays();
-  const storedValue = window.localStorage.getItem(MATCH_DAYS_STORAGE_KEY);
-
-  if (!storedValue) {
-    return fallbackMatchDays;
-  }
-
-  try {
-    return mergeStoredAvailability(fallbackMatchDays, JSON.parse(storedValue) as MatchDay[]);
-  } catch {
-    return fallbackMatchDays;
-  }
-}
-
-function mergeStoredAvailability(fallbackMatchDays: MatchDay[], storedMatchDays: MatchDay[]): MatchDay[] {
-  const mergedFallbackMatchDays = fallbackMatchDays.map((matchDay) => {
-    const storedMatchDay = storedMatchDays.find((stored) => stored.id === matchDay.id);
-
-    if (!storedMatchDay) {
-      return matchDay;
-    }
-
-    return {
-      ...matchDay,
-      availability: matchDay.availability.map((availability) => {
-        const storedAvailability = storedMatchDay.availability.find(
-          (stored) => stored.playerId === availability.playerId,
-        );
-
-        return storedAvailability ? { ...availability, status: storedAvailability.status } : availability;
-      }),
-    };
-  });
-  const customStoredMatchDays = storedMatchDays.filter(
-    (stored) => !fallbackMatchDays.some((matchDay) => matchDay.id === stored.id),
-  );
-
-  return [...mergedFallbackMatchDays, ...customStoredMatchDays].sort((a, b) => a.date.localeCompare(b.date));
+function sortMatchDays(matchDays: MatchDay[]): MatchDay[] {
+  return [...matchDays].sort((a, b) => a.date.localeCompare(b.date));
 }

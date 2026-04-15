@@ -59,6 +59,8 @@ Paket 3 schuetzt die App ueber ein gemeinsames Team-Passwort und speichert den a
 - Session-Endpunkte liegen unter `functions/api/session/*`.
 - `GET /api/players` liefert die aktive Spielerliste fuer die Spielerwahl.
 - Passwort-Hashes werden mit PBKDF2/SHA-256 erzeugt. Cloudflare Pages Functions unterstuetzt in dieser Runtime maximal 100.000 PBKDF2-Iterationen; das Hash-Script erzeugt deshalb kompatible Hashes mit `100000`.
+- Login und Spielerwahl laufen zusammen: `POST /api/session/login` akzeptiert `password` und `playerId`.
+- Nach Login ist der aktive Spieler nicht frei wechselbar. `Ich bin nicht <Name>` beendet die Session.
 
 Hash fuer das Team-Passwort erzeugen:
 
@@ -67,6 +69,20 @@ npm run hash:password -- "DEIN_TEAM_PASSWORT"
 ```
 
 Den ausgegebenen Hash in `team_settings.team_password_hash` eintragen oder vor dem Seed in `supabase/seeds/001_initial_lowhofer_data.sql` ersetzen.
+
+## API-Datenfluss
+
+Spieler, Polls und Responses laufen ueber Cloudflare Pages Functions gegen Supabase.
+
+- `GET /api/players`
+- `GET /api/polls`
+- `GET /api/polls/:pollId`
+- `POST /api/polls` fuer Admins
+- `PATCH /api/polls/:pollId` fuer Admins
+- `DELETE /api/polls/:pollId` fuer Admins
+- `PUT /api/polls/:pollId/response`
+
+Response-Writes verwenden den aktiven Spieler aus der signierten Session. Das Frontend sendet keine fremde `playerId` fuer Abstimmungen.
 
 ## Health Check
 

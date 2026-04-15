@@ -1,18 +1,8 @@
 import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
-import { Gender, Player, Position } from "../domain/types";
+import { fetchPlayers } from "../api/plannerApi";
+import { Player } from "../domain/types";
 import { SessionContextValue, SessionState } from "./sessionTypes";
 import { SessionContext } from "./sessionStore";
-
-interface ApiPlayer {
-  id: string;
-  displayName: string;
-  gender: Gender;
-  isAdmin: boolean;
-  positions: Array<{
-    position: "setter" | "outside" | "middle" | "opposite" | "libero";
-    isPrimary: boolean;
-  }>;
-}
 
 const LAST_PLAYER_STORAGE_KEY = "lowhofer.lastSelectedPlayerId";
 
@@ -21,14 +11,6 @@ const emptySession: SessionState = {
   selectedPlayerId: null,
   selectedPlayerDisplayName: null,
   selectedPlayerIsAdmin: false,
-};
-
-const positionByApiValue: Record<ApiPlayer["positions"][number]["position"], Position> = {
-  setter: Position.Setter,
-  outside: Position.Outside,
-  middle: Position.Middle,
-  opposite: Position.Opposite,
-  libero: Position.Libero,
 };
 
 export function SessionProvider({ children }: PropsWithChildren) {
@@ -42,12 +24,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     try {
       const nextSession = await fetchSession();
       setSession(nextSession);
-
-      if (nextSession.isAuthenticated) {
-        setPlayers(await fetchPlayers());
-      } else {
-        setPlayers([]);
-      }
+      setPlayers(await fetchPlayers());
     } finally {
       setIsLoading(false);
     }
@@ -57,9 +34,9 @@ export function SessionProvider({ children }: PropsWithChildren) {
     void refresh();
   }, [refresh]);
 
-  const login = useCallback(async (password: string) => {
-    await postJson("/api/session/login", { password });
-    const nextSession = await fetchSession();
+  const login = useCallback(async (password: string, playerId: string) => {
+    const nextSession = await postJson<SessionState>("/api/session/login", { password, playerId });
+    window.localStorage.setItem(LAST_PLAYER_STORAGE_KEY, playerId);
     setSession(nextSession);
     setPlayers(await fetchPlayers());
   }, []);
@@ -74,7 +51,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await postJson("/api/session/logout", {});
     window.localStorage.removeItem(LAST_PLAYER_STORAGE_KEY);
     setSession(emptySession);
-    setPlayers([]);
+    setPlayers(await fetchPlayers());
   }, []);
 
   const value = useMemo<SessionContextValue>(
@@ -103,18 +80,6 @@ async function fetchSession(): Promise<SessionState> {
   return (await response.json()) as SessionState;
 }
 
-async function fetchPlayers(): Promise<Player[]> {
-  const response = await fetch("/api/players");
-
-  if (!response.ok) {
-    throw new Error("Spielerliste konnte nicht geladen werden.");
-  }
-
-  const body = (await response.json()) as { players: ApiPlayer[] };
-
-  return body.players.map(mapApiPlayer);
-}
-
 async function postJson<T = unknown>(url: string, body: unknown): Promise<T> {
   const response = await fetch(url, {
     method: "POST",
@@ -129,17 +94,4 @@ async function postJson<T = unknown>(url: string, body: unknown): Promise<T> {
   }
 
   return (await response.json()) as T;
-}
-
-function mapApiPlayer(player: ApiPlayer): Player {
-  const positions = player.positions.map((position) => positionByApiValue[position.position]);
-  const primaryPosition = player.positions.find((position) => position.isPrimary);
-
-  return {
-    id: player.id,
-    name: player.displayName,
-    gender: player.gender,
-    positions,
-    primaryPosition: primaryPosition ? positionByApiValue[primaryPosition.position] : positions[0],
-  };
 }

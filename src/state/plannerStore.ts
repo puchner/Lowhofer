@@ -3,7 +3,6 @@ import { AvailabilityStatus, LeagueFixture, MatchDay, Player, PollType } from ".
 
 export interface UpdateAvailabilityInput {
   matchDayId: string;
-  playerId: string;
   status: AvailabilityStatus;
 }
 
@@ -28,10 +27,13 @@ export interface PlannerContextValue {
   players: Player[];
   matchDays: MatchDay[];
   leagueFixtures: LeagueFixture[];
-  createPoll: (input: CreatePollInput) => MatchDay;
-  deletePoll: (pollId: string) => void;
-  updatePoll: (input: UpdatePollInput) => void;
-  updateAvailability: (input: UpdateAvailabilityInput) => void;
+  isLoading: boolean;
+  error: string | null;
+  createPoll: (input: CreatePollInput) => Promise<MatchDay>;
+  deletePoll: (pollId: string) => Promise<void>;
+  refresh: () => Promise<void>;
+  updatePoll: (input: UpdatePollInput) => Promise<void>;
+  updateAvailability: (input: UpdateAvailabilityInput) => Promise<void>;
 }
 
 export const PlannerContext = createContext<PlannerContextValue | undefined>(undefined);

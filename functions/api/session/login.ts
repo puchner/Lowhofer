@@ -2,10 +2,11 @@ import { CloudflareEnv } from "../../_shared/env";
 import { jsonResponse, readJsonBody } from "../../_shared/http";
 import { createSessionCookie } from "../../_shared/session";
 import { verifyPassword } from "../../_shared/password";
-import { getTeamPasswordHash } from "../../_shared/supabase";
+import { getActivePlayer, getTeamPasswordHash } from "../../_shared/supabase";
 
 interface LoginRequestBody {
   password?: string;
+  playerId?: string;
 }
 
 export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
@@ -46,15 +47,29 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
     return jsonResponse({ error: "invalid_password" }, { status: 401 });
   }
 
+  const selectedPlayer = body?.playerId ? await getActivePlayer(env, body.playerId) : null;
+
+  if (body?.playerId && !selectedPlayer) {
+    return jsonResponse({ error: "player_not_found" }, { status: 404 });
+  }
+
   const headers = new Headers();
 
   try {
-    headers.append("set-cookie", await createSessionCookie(request, env));
+    headers.append("set-cookie", await createSessionCookie(request, env, selectedPlayer?.id));
   } catch (error) {
     console.error("Could not create session cookie.", error);
 
     return jsonResponse({ error: "session_cookie_failed" }, { status: 500 });
   }
 
-  return jsonResponse({ isAuthenticated: true, selectedPlayerId: null }, { headers });
+  return jsonResponse(
+    {
+      isAuthenticated: true,
+      selectedPlayerId: selectedPlayer?.id ?? null,
+      selectedPlayerDisplayName: selectedPlayer?.display_name ?? null,
+      selectedPlayerIsAdmin: selectedPlayer?.is_admin ?? false,
+    },
+    { headers },
+  );
 };

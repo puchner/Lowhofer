@@ -6,6 +6,7 @@ Liga-Tabelle und Fixtures serverseitig laden, parsen, normalisieren und mit 15-M
 ## Voraussetzung
 Paket 1 ist im Repo umgesetzt. League-Endpunkte sollen als Cloudflare Pages Functions unter `functions/api/league/*` entstehen.
 Paket 2 hat die Tabelle `league_cache` sowie die Liga-URL-Felder in `team_settings` angelegt.
+Paket 4 hat Polls und Responses bereits auf `/api/*` + Supabase umgestellt. Die Fixture-Auswahl in der Poll-Anlage nutzt aber noch die lokale Import-/Mock-Struktur und soll in diesem Paket auf `/api/league/fixtures` umgestellt werden.
 
 ## Verbindliche Regel
 Verbandsdaten werden **nicht direkt im Browser** geladen.
@@ -62,7 +63,7 @@ Der bestehende Importer und die Tabellenlogik sollen in wiederverwendbare Bauste
 
 ## Frontend-Anbindung
 - `/table` nutzt `GET /api/league/table`
-- Admin-Poll-Anlage nutzt `GET /api/league/fixtures`
+- Poll-Anlage nutzt `GET /api/league/fixtures`; Admin-Freischaltung kommt aus dem normalen UI, kein separater Admin-Bereich
 - UI zeigt Datenstand an, z. B.:
   - zuletzt aktualisiert
   - optional Hinweis bei stale fallback

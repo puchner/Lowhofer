@@ -10,7 +10,7 @@ export interface SessionState {
 export interface SessionContextValue extends SessionState {
   isLoading: boolean;
   players: Player[];
-  login: (password: string) => Promise<void>;
+  login: (password: string, playerId: string) => Promise<void>;
   logout: () => Promise<void>;
   selectPlayer: (playerId: string) => Promise<void>;
   refresh: () => Promise<void>;

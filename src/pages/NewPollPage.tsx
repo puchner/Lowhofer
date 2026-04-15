@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PollType } from "../domain/types";
+import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 const todayKey = new Date().toISOString().slice(0, 10);
@@ -8,6 +9,7 @@ const todayKey = new Date().toISOString().slice(0, 10);
 export function NewPollPage() {
   const navigate = useNavigate();
   const { createPoll, leagueFixtures, matchDays } = usePlanner();
+  const { selectedPlayerIsAdmin } = useSession();
   const [title, setTitle] = useState("");
   const [opponent, setOpponent] = useState("");
   const [date, setDate] = useState(todayKey);
@@ -16,14 +18,14 @@ export function NewPollPage() {
   const [homeAway, setHomeAway] = useState<"home" | "away" | "unknown">("unknown");
   const existingFixtureIds = new Set(matchDays.map((matchDay) => matchDay.sourceFixtureId).filter(Boolean));
 
-  function createFromFixture(fixtureId: string) {
+  async function createFromFixture(fixtureId: string) {
     const fixture = leagueFixtures.find((item) => item.id === fixtureId);
 
     if (!fixture?.date) {
       return;
     }
 
-    createPoll({
+    await createPoll({
       title: fixture.opponent,
       type: "match",
       date: fixture.date,
@@ -32,13 +34,13 @@ export function NewPollPage() {
       homeAway: fixture.homeAway,
       sourceFixtureId: fixture.id,
     });
-    navigate("/admin");
+    navigate("/");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    createPoll({
+    await createPoll({
       title: title.trim() || opponent.trim(),
       type,
       date,
@@ -46,7 +48,16 @@ export function NewPollPage() {
       opponent: opponent.trim() || "Offen",
       homeAway,
     });
-    navigate("/admin");
+    navigate("/");
+  }
+
+  if (!selectedPlayerIsAdmin) {
+    return (
+      <section className="rounded-lg border border-warning/40 bg-warning/10 p-4">
+        <h2 className="text-xl font-bold text-petrol-900">Admin-Funktion</h2>
+        <p className="mt-2 text-sm text-base-content/70">Nur Pia und Volker können Abstimmungen anlegen.</p>
+      </section>
+    );
   }
 
   return (
@@ -76,7 +87,7 @@ export function NewPollPage() {
                   <button
                     className="btn btn-primary min-h-11 rounded-lg"
                     disabled={!canCreate}
-                    onClick={() => createFromFixture(fixture.id)}
+                    onClick={() => void createFromFixture(fixture.id)}
                     type="button"
                   >
                     {alreadyExists ? "Schon angelegt" : fixture.date ? "Anlegen" : "Datum fehlt"}
