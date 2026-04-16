@@ -304,6 +304,39 @@ export async function invalidateLeagueCache(env: CloudflareEnv): Promise<void> {
   await supabaseFetch<void>(env, "/league_cache?cache_key=in.(table,fixtures)", { method: "DELETE" });
 }
 
+export interface PlayerUpdateStateRow {
+  player_id: string;
+  last_seen_update_at: string;
+  updated_at: string;
+}
+
+export async function getPlayerUpdateState(env: CloudflareEnv, playerId: string): Promise<PlayerUpdateStateRow | null> {
+  const rows = await supabaseFetch<PlayerUpdateStateRow[]>(
+    env,
+    `/player_update_state?player_id=eq.${encodeURIComponent(playerId)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function upsertPlayerUpdateState(
+  env: CloudflareEnv,
+  playerId: string,
+  lastSeenUpdateAt: string,
+): Promise<void> {
+  await supabaseFetch<void>(env, "/player_update_state?on_conflict=player_id", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "resolution=merge-duplicates",
+    },
+    body: JSON.stringify({
+      player_id: playerId,
+      last_seen_update_at: lastSeenUpdateAt,
+    }),
+  });
+}
+
 export async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: RequestInit = {}): Promise<T> {
   const supabaseUrl = getRequiredEnv(env, "SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = getRequiredEnv(env, "SUPABASE_SERVICE_ROLE_KEY");

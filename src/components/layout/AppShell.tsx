@@ -1,12 +1,12 @@
 import { ExternalLink } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { fetchLeagueSource } from "../../api/plannerApi";
 import { PlayerAvatar } from "../players/PlayerAvatar";
 import { SessionGate } from "../../session/SessionGate";
 import { useSession } from "../../session/sessionStore";
 import { usePlanner } from "../../state/plannerStore";
-import { OxHeadMark } from "../branding/OxHeadMark";
+import { OxUpdatesButton } from "../header/OxUpdatesButton";
 
 const navigationItems = [
   { to: "/", label: "Spieltage", end: true },
@@ -14,23 +14,76 @@ const navigationItems = [
   { to: "/players", label: "Spieler", end: false },
 ];
 
+const audioPath = "/audio/ochsnfetzn.mp3";
+
 export function AppShell() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const shakeTimeoutRef = useRef<number | null>(null);
+  const [isOxShaking, setIsOxShaking] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (shakeTimeoutRef.current) {
+        window.clearTimeout(shakeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function getAudio() {
+    if (!audioRef.current) {
+      audioRef.current = new Audio(audioPath);
+      audioRef.current.volume = 0.8;
+    }
+
+    return audioRef.current;
+  }
+
+  function triggerOxShake() {
+    if (shakeTimeoutRef.current) {
+      window.clearTimeout(shakeTimeoutRef.current);
+    }
+
+    setIsOxShaking(false);
+    shakeTimeoutRef.current = window.setTimeout(() => {
+      setIsOxShaking(true);
+      shakeTimeoutRef.current = window.setTimeout(() => {
+        setIsOxShaking(false);
+        shakeTimeoutRef.current = null;
+      }, 450);
+    }, 0);
+  }
+
+  function handleBannerClick() {
+    const audio = getAudio();
+    audio.currentTime = 0;
+    audio.play().catch((error: unknown) => {
+      console.error("OchsnFetzn audio playback failed", error);
+    });
+
+    triggerOxShake();
+  }
+
   return (
     <SessionGate>
       <div className="min-h-screen bg-base-200 text-base-content">
         <header className="border-b-4 border-secondary bg-petrol-900 text-white">
           <div className="mx-auto flex max-w-6xl flex-col px-3 py-3 sm:px-4 sm:py-4">
             <div className="flex items-center gap-3">
-              <OxHeadMark />
+              <OxUpdatesButton isShaking={isOxShaking} />
               <div className="flex flex-1 items-center justify-between gap-3">
-                <div className="flex flex-col rounded-lg bg-secondary px-3 py-1 shadow-[4px_4px_0_0_rgba(255,255,255,0.16)] sm:px-4 sm:py-1.5">
+                <button
+                  className="flex flex-col rounded-lg border-0 bg-secondary px-3 py-1 text-left shadow-[4px_4px_0_0_rgba(255,255,255,0.16)] transition-transform hover:scale-[1.01] active:scale-[0.99] sm:px-4 sm:py-1.5"
+                  onClick={handleBannerClick}
+                  title="OchsnFetzn"
+                  type="button"
+                >
                   <span className="text-[10px] font-bold uppercase tracking-wider text-petrol-900/60 sm:text-xs">
                     Lowhofer
                   </span>
                   <p className="text-lg font-black uppercase leading-none text-petrol-900 sm:text-2xl">
                     Let the Ox fetz!
                   </p>
-                </div>
+                </button>
                 <LeagueSiteLink />
               </div>
             </div>

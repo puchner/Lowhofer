@@ -1,8 +1,14 @@
-export function OxHeadMark() {
+type OxHeadMarkProps = {
+  className?: string;
+};
+
+export function OxHeadMark({
+  className = "h-14 w-16 shrink-0 text-neon drop-shadow-[0_6px_0_rgba(0,0,0,0.24)] sm:h-20 sm:w-24",
+}: OxHeadMarkProps) {
   return (
     <svg
       aria-hidden="true"
-      className="h-14 w-16 shrink-0 text-neon drop-shadow-[0_6px_0_rgba(0,0,0,0.24)] sm:h-20 sm:w-24"
+      className={className}
       fill="none"
       viewBox="0 0 128 104"
       xmlns="http://www.w3.org/2000/svg"

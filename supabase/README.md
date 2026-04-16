@@ -16,6 +16,8 @@ Aktueller Stand:
   - RLS aktiviert, ohne Browser-Policies
 - `202604160002_add_player_avatars.sql`
   - Avatar-Metadaten fuer generierte Spieler-Avatare
+- `202604160003_create_player_update_state.sql`
+  - Gesehen-Status fuer App-Updates pro Spieler
 
 ## Seeds
 
@@ -41,6 +43,7 @@ Wenn kein Supabase-CLI-Workflow verbunden ist, koennen die SQL-Dateien im Supaba
 
 1. `supabase/migrations/202604150001_create_core_schema.sql`
 2. `supabase/seeds/001_initial_lowhofer_data.sql`
+3. `supabase/migrations/202604160003_create_player_update_state.sql`
 
 Die Cloudflare-Secrets fuer die spaetere API-Anbindung sind:
 
