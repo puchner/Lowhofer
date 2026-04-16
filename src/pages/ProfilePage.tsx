@@ -333,6 +333,10 @@ function getProfileErrorMessage(error: unknown): string {
     return "Die Profilfelder fehlen noch in der Datenbank. Bitte die Avatar-Migration ausführen.";
   }
 
+  if (error instanceof Error && error.message === "display_name_already_exists") {
+    return "Name schon vergeben.";
+  }
+
   return "Profil konnte nicht gespeichert werden.";
 }
 

@@ -4,6 +4,7 @@ import { CloudflareEnv } from "../_shared/env";
 import { requireWritableMember } from "../_shared/auth";
 import { jsonResponse, readJsonBody } from "../_shared/http";
 import {
+  findActivePlayerByDisplayName,
   getPlayerWithPositions,
   replacePlayerPositions,
   updatePlayerCoreProfile,
@@ -63,6 +64,12 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
   }
 
   try {
+    const existingNameOwner = await findActivePlayerByDisplayName(env, validation.displayName);
+
+    if (existingNameOwner && existingNameOwner.id !== authenticated.selectedPlayerId) {
+      return jsonResponse({ error: "display_name_already_exists" }, { status: 409 });
+    }
+
     await updatePlayerCoreProfile(env, authenticated.selectedPlayerId, {
       display_name: validation.displayName,
       gender: validation.gender,
@@ -83,6 +90,10 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
   } catch (error) {
     if (error instanceof Error && error.message.includes("avatar_")) {
       return jsonResponse({ error: "profile_migration_required" }, { status: 409 });
+    }
+
+    if (error instanceof Error && error.message.includes("players_active_display_name_unique_idx")) {
+      return jsonResponse({ error: "display_name_already_exists" }, { status: 409 });
     }
 
     throw error;

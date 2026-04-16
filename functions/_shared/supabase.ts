@@ -70,6 +70,18 @@ export async function getPlayerWithPositions(
   return rows[0] ?? null;
 }
 
+export async function findActivePlayerByDisplayName(
+  env: CloudflareEnv,
+  displayName: string,
+): Promise<Pick<DbPlayerRow, "id" | "display_name"> | null> {
+  const rows = await supabaseFetch<Pick<DbPlayerRow, "id" | "display_name">[]>(
+    env,
+    `/players?select=id,display_name&display_name=ilike.${encodeURIComponent(displayName)}&is_active=eq.true&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
 export async function updatePlayerCoreProfile(
   env: CloudflareEnv,
   playerId: string,
