@@ -11,6 +11,7 @@ const emptySession: SessionState = {
   selectedPlayerId: null,
   selectedPlayerDisplayName: null,
   selectedPlayerIsAdmin: false,
+  selectedPlayerRole: null,
 };
 
 export function SessionProvider({ children }: PropsWithChildren) {
@@ -24,7 +25,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     try {
       const nextSession = await fetchSession();
       setSession(nextSession);
-      setPlayers(await fetchPlayers());
+      setPlayers(await fetchPlayers({ scope: "login" }));
     } finally {
       setIsLoading(false);
     }
@@ -38,7 +39,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     const nextSession = await postJson<SessionState>("/api/session/login", { password, playerId });
     window.localStorage.setItem(LAST_PLAYER_STORAGE_KEY, playerId);
     setSession(nextSession);
-    setPlayers(await fetchPlayers());
+    setPlayers(await fetchPlayers({ scope: "login" }));
   }, []);
 
   const selectPlayer = useCallback(async (playerId: string) => {
@@ -51,7 +52,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await postJson("/api/session/logout", {});
     window.localStorage.removeItem(LAST_PLAYER_STORAGE_KEY);
     setSession(emptySession);
-    setPlayers(await fetchPlayers());
+    setPlayers(await fetchPlayers({ scope: "login" }));
   }, []);
 
   const value = useMemo<SessionContextValue>(

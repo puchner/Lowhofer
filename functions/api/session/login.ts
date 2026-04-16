@@ -69,6 +69,7 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
       selectedPlayerId: selectedPlayer?.id ?? null,
       selectedPlayerDisplayName: selectedPlayer?.display_name ?? null,
       selectedPlayerIsAdmin: selectedPlayer?.is_admin ?? false,
+      selectedPlayerRole: selectedPlayer?.role ?? null,
     },
     { headers },
   );

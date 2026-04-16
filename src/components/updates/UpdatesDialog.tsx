@@ -80,6 +80,8 @@ export function UpdatesDialog({
 
           {isLoading ? <p className="mb-4 text-sm font-semibold text-base-content/60">Updates werden geprüft...</p> : null}
 
+          {error ? <p className="mb-4 text-sm font-semibold text-error">{error}</p> : null}
+
           {sortedUpdates.length > 0 ? (
             <ol className="space-y-3">
               {sortedUpdates.map((update) => {

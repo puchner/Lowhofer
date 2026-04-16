@@ -29,6 +29,7 @@ export interface PlayerAvatar {
 export interface Player {
   id: string;
   name: string;
+  role?: "member" | "training_member";
   gender: Gender;
   positions: Position[];
   primaryPosition?: Position;

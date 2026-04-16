@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
 import { FormEvent, PropsWithChildren, useMemo, useState } from "react";
+import { getLoginAccountLabel } from "../domain/playerRoles";
 import { useSession } from "./sessionStore";
 
 export function SessionGate({ children }: PropsWithChildren) {
@@ -50,7 +51,7 @@ export function SessionGate({ children }: PropsWithChildren) {
           >
             {session.players.map((player) => (
               <option key={player.id} value={player.id}>
-                {player.name}
+                {getLoginAccountLabel(player)}
               </option>
             ))}
           </select>

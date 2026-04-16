@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { getAllUpcomingMatchDays, getUpcomingMatchDays } from "../domain/matchDayFilters";
+import { isTrainingMemberRole } from "../domain/playerRoles";
 import { AvailabilityStatus } from "../domain/types";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
@@ -14,6 +15,7 @@ export function DashboardPage() {
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
   const activePlayerId = session.selectedPlayerId;
   const canAdmin = session.selectedPlayerIsAdmin;
+  const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
   const allUpcomingMatchDays = getAllUpcomingMatchDays(matchDays);
   const upcomingMatchDays = showAllMatchDays ? allUpcomingMatchDays : getUpcomingMatchDays(matchDays);
   const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
@@ -47,7 +49,7 @@ export function DashboardPage() {
               : matchDay.availability.find((entry) => entry.playerId === activePlayerId);
           const availability = activeAvailability?.status ?? AvailabilityStatus.Unknown;
           const cardAction =
-            activePlayerId ? (
+            activePlayerId && canWriteAvailability ? (
               <AvailabilityButtons
                 comment={activeAvailability?.comment}
                 onChange={(status, comment) =>

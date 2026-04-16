@@ -11,8 +11,9 @@ interface TeamSettingsPasswordRow {
 }
 
 const playerSelect =
-  "id,display_name,gender,is_active,is_admin,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,created_at,updated_at";
+  "id,display_name,gender,is_active,is_admin,role,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,created_at,updated_at";
 const legacyPlayerSelect = "id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at";
+const legacyCorePlayerSelect = "id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at";
 
 export async function getTeamPasswordHash(env: CloudflareEnv): Promise<string | null> {
   const rows = await supabaseFetch<TeamSettingsPasswordRow[]>(env, "/team_settings?select=team_password_hash&limit=1");
@@ -21,6 +22,18 @@ export async function getTeamPasswordHash(env: CloudflareEnv): Promise<string | 
 }
 
 export async function listActivePlayers(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
+  return listActiveTeamPlayers(env);
+}
+
+export async function listActiveTeamPlayers(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
+  return supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
+    env,
+    `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&role=neq.training_member&order=sort_order.asc`,
+    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
+  );
+}
+
+export async function listActiveLoginAccounts(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
   return supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
     env,
     `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
@@ -29,11 +42,12 @@ export async function listActivePlayers(env: CloudflareEnv): Promise<DbPlayerWit
 }
 
 export async function getActivePlayer(env: CloudflareEnv, playerId: string): Promise<DbPlayerRow | null> {
-  const rows = await supabaseFetch<DbPlayerRow[]>(
+  const rows = await supabaseFetchWithLegacyPlayerFallback<DbPlayerRow[]>(
     env,
-    `/players?select=id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at&id=eq.${encodeURIComponent(
+    `/players?select=id,display_name,gender,is_active,is_admin,role,sort_order,created_at,updated_at&id=eq.${encodeURIComponent(
       playerId,
     )}&is_active=eq.true&limit=1`,
+    `/players?select=${legacyCorePlayerSelect}&id=eq.${encodeURIComponent(playerId)}&is_active=eq.true&limit=1`,
   );
 
   return rows[0] ?? null;

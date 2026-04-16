@@ -1,14 +1,16 @@
 import { CloudflareEnv } from "../_shared/env";
 import { jsonResponse } from "../_shared/http";
-import { listActivePlayers } from "../_shared/supabase";
+import { listActiveLoginAccounts, listActiveTeamPlayers } from "../_shared/supabase";
 
-export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ env }) => {
-  const players = await listActivePlayers(env);
+export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
+  const scope = new URL(request.url).searchParams.get("scope");
+  const players = scope === "login" ? await listActiveLoginAccounts(env) : await listActiveTeamPlayers(env);
 
   return jsonResponse({
     players: players.map((player) => ({
       id: player.id,
       displayName: player.display_name,
+      role: player.role ?? "member",
       gender: player.gender,
       isAdmin: player.is_admin,
       avatar: player.avatar_kind

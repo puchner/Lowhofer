@@ -5,6 +5,7 @@ import type { CreatePollInput, UpdatePollInput } from "../state/plannerStore";
 interface ApiPlayer {
   id: string;
   displayName: string;
+  role?: Player["role"];
   gender: Player["gender"];
   isAdmin: boolean;
   avatar?: {
@@ -27,8 +28,9 @@ const positionByApiValue: Record<ApiPlayer["positions"][number]["position"], Pos
   libero: Position.Libero,
 };
 
-export async function fetchPlayers(): Promise<Player[]> {
-  const body = await requestJson<{ players: ApiPlayer[] }>("/api/players");
+export async function fetchPlayers(options: { scope?: "login" | "team" } = {}): Promise<Player[]> {
+  const query = options.scope === "login" ? "?scope=login" : "";
+  const body = await requestJson<{ players: ApiPlayer[] }>(`/api/players${query}`);
 
   return body.players.map(mapApiPlayer);
 }
@@ -142,6 +144,7 @@ function mapApiPlayer(player: ApiPlayer): Player {
   return {
     id: player.id,
     name: player.displayName,
+    role: player.role ?? "member",
     gender: player.gender,
     positions,
     primaryPosition: primaryPosition ? positionByApiValue[primaryPosition.position] : positions[0],

@@ -6,6 +6,7 @@ export type DbAvailabilityStatus = "available" | "unavailable" | "maybe" | "unkn
 export type DbPollType = "match" | "date-finding";
 export type DbPollStatus = "open" | "archived" | "cancelled";
 export type DbHomeAway = "home" | "away" | "unknown";
+export type DbPlayerRole = "member" | "training_member";
 
 export interface DbPlayerRow {
   id: string;
@@ -13,6 +14,7 @@ export interface DbPlayerRow {
   gender: DbGender;
   is_active: boolean;
   is_admin: boolean;
+  role?: DbPlayerRole;
   sort_order: number;
   avatar_kind?: "generated" | "uploaded";
   avatar_style?: string | null;
@@ -115,6 +117,7 @@ export function mapDbPlayerToPlayer(row: DbPlayerWithPositions): Player {
   return {
     id: row.id,
     name: row.display_name,
+    role: row.role ?? "member",
     gender: row.gender as Gender,
     positions,
     primaryPosition: primaryPosition ? dbPositionToPosition(primaryPosition.position) : positions[0],

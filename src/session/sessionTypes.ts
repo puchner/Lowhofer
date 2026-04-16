@@ -5,6 +5,7 @@ export interface SessionState {
   selectedPlayerId: string | null;
   selectedPlayerDisplayName: string | null;
   selectedPlayerIsAdmin: boolean;
+  selectedPlayerRole: Player["role"] | null;
 }
 
 export interface SessionContextValue extends SessionState {

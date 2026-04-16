@@ -1,4 +1,4 @@
-import { requireSelectedPlayer } from "../../../_shared/auth";
+import { requireSelectedPlayer, requireWritableMember } from "../../../_shared/auth";
 import { CloudflareEnv } from "../../../_shared/env";
 import { jsonResponse, readJsonBody } from "../../../_shared/http";
 import { buildResponseUpsert, ResponseRequestBody } from "../../../_shared/pollMapping";
@@ -6,7 +6,7 @@ import { getPoll, listResponsesForPoll, upsertResponse } from "../../../_shared/
 import { dbStatusToAvailabilityStatus } from "../../../../src/data/supabaseMappers";
 
 export const onRequestPut: PagesFunction<CloudflareEnv, "pollId"> = async ({ request, env, params }) => {
-  const authenticated = await requireSelectedPlayer(request, env);
+  const authenticated = await requireWritableMember(request, env);
 
   if (authenticated instanceof Response) {
     return authenticated;

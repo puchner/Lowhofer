@@ -18,6 +18,9 @@ Aktueller Stand:
   - Avatar-Metadaten fuer generierte Spieler-Avatare
 - `202604160003_create_player_update_state.sql`
   - Gesehen-Status fuer App-Updates pro Spieler
+- `202604160004_add_training_member_role.sql`
+  - Rollenfeld fuer Login-Accounts
+  - gemeinsamer Nur-Lesen-Zugang `Lowhofer` mit Rolle `training_member`
 
 ## Seeds
 
@@ -42,8 +45,10 @@ Vor produktiver Nutzung muessen fachlich bestaetigt werden:
 Wenn kein Supabase-CLI-Workflow verbunden ist, koennen die SQL-Dateien im Supabase SQL Editor in dieser Reihenfolge ausgefuehrt werden:
 
 1. `supabase/migrations/202604150001_create_core_schema.sql`
-2. `supabase/seeds/001_initial_lowhofer_data.sql`
+2. `supabase/migrations/202604160002_add_player_avatars.sql`
 3. `supabase/migrations/202604160003_create_player_update_state.sql`
+4. `supabase/seeds/001_initial_lowhofer_data.sql`
+5. `supabase/migrations/202604160004_add_training_member_role.sql`
 
 Die Cloudflare-Secrets fuer die spaetere API-Anbindung sind:
 

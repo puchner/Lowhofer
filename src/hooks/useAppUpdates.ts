@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchUpdateState, markUpdatesSeen } from "../api/updatesApi";
 import { appUpdates } from "../content/appUpdates";
+import { isTrainingMemberRole } from "../domain/playerRoles";
 import { useSession } from "../session/sessionStore";
 
 const initialLastSeenUpdateAt = "1970-01-01T00:00:00.000Z";
@@ -11,6 +12,7 @@ export function useAppUpdates() {
   const [lastSeenUpdateAt, setLastSeenUpdateAt] = useState(initialLastSeenUpdateAt);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isTrainingMember = isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
 
   const latestPublishedAt = useMemo(() => {
     const latestTime = appUpdates.reduce((latest, update) => {
@@ -26,7 +28,7 @@ export function useAppUpdates() {
     requestIdRef.current += 1;
     const requestId = requestIdRef.current;
 
-    if (!session.isAuthenticated || !session.selectedPlayerId) {
+    if (!session.isAuthenticated || !session.selectedPlayerId || isTrainingMember) {
       setLastSeenUpdateAt(initialLastSeenUpdateAt);
       setIsLoading(false);
       setError(null);
@@ -57,17 +59,17 @@ export function useAppUpdates() {
           setIsLoading(false);
         }
       });
-  }, [session.isAuthenticated, session.selectedPlayerId]);
+  }, [isTrainingMember, session.isAuthenticated, session.selectedPlayerId]);
 
   const unreadUpdates = useMemo(() => {
     const lastSeenTime = new Date(lastSeenUpdateAt).getTime();
 
-    if (Number.isNaN(lastSeenTime) || !session.isAuthenticated || !session.selectedPlayerId) {
+    if (Number.isNaN(lastSeenTime) || !session.isAuthenticated || !session.selectedPlayerId || isTrainingMember) {
       return [];
     }
 
     return appUpdates.filter((update) => new Date(update.publishedAt).getTime() > lastSeenTime);
-  }, [lastSeenUpdateAt, session.isAuthenticated, session.selectedPlayerId]);
+  }, [isTrainingMember, lastSeenUpdateAt, session.isAuthenticated, session.selectedPlayerId]);
 
   const markAllAsSeen = useCallback(async () => {
     if (appUpdates.length === 0) {
@@ -77,7 +79,7 @@ export function useAppUpdates() {
     const previousLastSeenUpdateAt = lastSeenUpdateAt;
     setLastSeenUpdateAt(latestPublishedAt);
 
-    if (!session.isAuthenticated || !session.selectedPlayerId) {
+    if (!session.isAuthenticated || !session.selectedPlayerId || isTrainingMember) {
       return;
     }
 
@@ -89,7 +91,7 @@ export function useAppUpdates() {
       setError(saveError instanceof Error ? saveError.message : "Update-Status konnte nicht gespeichert werden.");
       setLastSeenUpdateAt(previousLastSeenUpdateAt);
     }
-  }, [lastSeenUpdateAt, latestPublishedAt, session.isAuthenticated, session.selectedPlayerId]);
+  }, [isTrainingMember, lastSeenUpdateAt, latestPublishedAt, session.isAuthenticated, session.selectedPlayerId]);
 
   return {
     allUpdates: appUpdates,

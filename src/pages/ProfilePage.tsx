@@ -10,6 +10,7 @@ import {
   type GeneratedAvatarOption,
 } from "../domain/avatarOptions";
 import { genderLabel } from "../domain/labels";
+import { isTrainingMemberRole } from "../domain/playerRoles";
 import { Gender, Player, Position } from "../domain/types";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
@@ -31,11 +32,17 @@ export function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isTrainingMember = isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
 
   useEffect(() => {
     let isMounted = true;
 
     setIsLoading(true);
+    if (isTrainingMember) {
+      setIsLoading(false);
+      return;
+    }
+
     fetchProfile()
       .then((nextProfile) => {
         if (!isMounted) {
@@ -58,7 +65,7 @@ export function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isTrainingMember]);
 
   const previewPlayer = useMemo<Player>(
     () => ({
@@ -145,6 +152,17 @@ export function ProfilePage() {
 
   if (isLoading) {
     return <p className="font-semibold text-base-content/70">Profil wird geladen...</p>;
+  }
+
+  if (isTrainingMember) {
+    return (
+      <section className="rounded-lg border border-primary/15 bg-base-100 p-4 shadow-sm">
+        <h2 className="text-xl font-bold text-petrol-900">Lowhofer - Nur Lesen</h2>
+        <p className="mt-2 text-sm text-base-content/70">
+          Dieser Zugang ist kein aktiver Spieler und hat kein bearbeitbares Profil.
+        </p>
+      </section>
+    );
   }
 
   return (

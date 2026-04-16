@@ -36,6 +36,7 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
       selectedPlayerId: player.id,
       selectedPlayerDisplayName: player.display_name,
       selectedPlayerIsAdmin: player.is_admin,
+      selectedPlayerRole: player.role ?? "member",
     },
     { headers },
   );

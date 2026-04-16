@@ -35,4 +35,11 @@ export const appUpdates: AppUpdate[] = [
     publishedAt: "2026-04-16T00:00:00.000Z",
     category: "feature",
   },
+  {
+    id: "2026-04-16-lowhofer-read-only",
+    title: "Alle Lowhofer an Bord",
+    description: "Mit dem gemeinsamen Lowhofer-Zugang bleiben auch Mitleser bei Terminen, Tabelle, Spielern und News auf dem Laufenden.",
+    publishedAt: "2026-04-16T12:00:00.000Z",
+    category: "feature",
+  },
 ];

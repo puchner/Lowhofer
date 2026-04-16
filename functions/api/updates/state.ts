@@ -2,6 +2,7 @@ import { CloudflareEnv } from "../../_shared/env";
 import { requireSelectedPlayer } from "../../_shared/auth";
 import { jsonResponse, readJsonBody } from "../../_shared/http";
 import { getPlayerUpdateState, upsertPlayerUpdateState } from "../../_shared/supabase";
+import { isTrainingMemberRole } from "../../../src/domain/playerRoles";
 
 const initialLastSeenUpdateAt = "1970-01-01T00:00:00.000Z";
 
@@ -16,6 +17,10 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
     return authenticated;
   }
 
+  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+    return jsonResponse({ lastSeenUpdateAt: new Date().toISOString() });
+  }
+
   const state = await getPlayerUpdateState(env, authenticated.selectedPlayerId);
 
   return jsonResponse({
@@ -28,6 +33,10 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
 
   if (authenticated instanceof Response) {
     return authenticated;
+  }
+
+  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+    return jsonResponse({ lastSeenUpdateAt: new Date().toISOString() });
   }
 
   const body = await readJsonBody<UpdateStateInput>(request);

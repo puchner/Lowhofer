@@ -1,7 +1,7 @@
 import { DbGender, DbPosition } from "../../src/data/supabaseMappers";
 import { isGeneratedAvatarOption } from "../../src/domain/avatarOptions";
 import { CloudflareEnv } from "../_shared/env";
-import { requireSelectedPlayer } from "../_shared/auth";
+import { requireWritableMember } from "../_shared/auth";
 import { jsonResponse, readJsonBody } from "../_shared/http";
 import {
   getPlayerWithPositions,
@@ -33,7 +33,7 @@ interface ValidProfileInput {
 }
 
 export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
-  const authenticated = await requireSelectedPlayer(request, env);
+  const authenticated = await requireWritableMember(request, env);
 
   if (authenticated instanceof Response) {
     return authenticated;
@@ -49,7 +49,7 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
 };
 
 export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
-  const authenticated = await requireSelectedPlayer(request, env);
+  const authenticated = await requireWritableMember(request, env);
 
   if (authenticated instanceof Response) {
     return authenticated;

@@ -2,11 +2,14 @@ import { CloudflareEnv } from "./env";
 import { jsonResponse } from "./http";
 import { readSession, SessionPayload } from "./session";
 import { getActivePlayer } from "./supabase";
+import { DbPlayerRole } from "../../src/data/supabaseMappers";
+import { isTrainingMemberRole } from "../../src/domain/playerRoles";
 
 export interface AuthenticatedRequest {
   session: SessionPayload;
   selectedPlayerId: string;
   selectedPlayerIsAdmin: boolean;
+  selectedPlayerRole: DbPlayerRole;
 }
 
 export async function requireSelectedPlayer(
@@ -33,6 +36,7 @@ export async function requireSelectedPlayer(
     session,
     selectedPlayerId: selectedPlayer.id,
     selectedPlayerIsAdmin: selectedPlayer.is_admin,
+    selectedPlayerRole: selectedPlayer.role ?? "member",
   };
 }
 
@@ -45,6 +49,23 @@ export async function requireAdmin(request: Request, env: CloudflareEnv): Promis
 
   if (!authenticated.selectedPlayerIsAdmin) {
     return jsonResponse({ error: "admin_required" }, { status: 403 });
+  }
+
+  return authenticated;
+}
+
+export async function requireWritableMember(
+  request: Request,
+  env: CloudflareEnv,
+): Promise<AuthenticatedRequest | Response> {
+  const authenticated = await requireSelectedPlayer(request, env);
+
+  if (authenticated instanceof Response) {
+    return authenticated;
+  }
+
+  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+    return jsonResponse({ error: "training_member_read_only" }, { status: 403 });
   }
 
   return authenticated;
