@@ -72,7 +72,7 @@ function applyResult(standing: LeagueStanding, setsWon: number, setsLost: number
 
 function getMatchPoints(setsWon: number, setsLost: number): number {
   if (setsWon === 2 && setsLost === 0) {
-    return 3;
+    return 2;
   }
 
   if (setsWon === 2 && setsLost === 1) {
