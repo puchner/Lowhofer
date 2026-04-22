@@ -2,6 +2,7 @@ import { CalendarSync, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchCalendarFeedUrl } from "../api/plannerApi";
+import { CalendarSubscriptionDialog } from "../components/calendar/CalendarSubscriptionDialog";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { groupMatchDays } from "../domain/matchDayGroups";
@@ -16,6 +17,9 @@ export function DashboardPage() {
   const session = useSession();
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
   const [isOpeningCalendarFeed, setIsOpeningCalendarFeed] = useState(false);
+  const [calendarFeedUrl, setCalendarFeedUrl] = useState<string | null>(null);
+  const [calendarWebcalUrl, setCalendarWebcalUrl] = useState<string | null>(null);
+  const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const activePlayerId = session.selectedPlayerId;
   const canAdmin = session.selectedPlayerIsAdmin;
   const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
@@ -29,11 +33,16 @@ export function DashboardPage() {
 
     try {
       const feedUrl = await fetchCalendarFeedUrl();
-      const feedLocation = new URL(feedUrl);
-      const isLocalHost = feedLocation.hostname === "localhost" || feedLocation.hostname === "127.0.0.1";
-      const targetUrl = isLocalHost ? feedUrl : `webcal://${feedLocation.host}${feedLocation.pathname}${feedLocation.search}`;
+      const webcalUrl = toWebcalUrl(feedUrl);
 
-      window.location.assign(targetUrl);
+      setCalendarFeedUrl(feedUrl);
+      setCalendarWebcalUrl(webcalUrl);
+
+      if (shouldOpenCalendarDirectly()) {
+        window.location.assign(webcalUrl ?? feedUrl);
+      } else {
+        setIsCalendarDialogOpen(true);
+      }
     } catch (nextError) {
       window.alert(nextError instanceof Error ? nextError.message : "Kalender-Link konnte nicht geladen werden.");
     } finally {
@@ -70,6 +79,13 @@ export function DashboardPage() {
           </div>
         </div>
       </div>
+
+      <CalendarSubscriptionDialog
+        feedUrl={calendarFeedUrl}
+        isOpen={isCalendarDialogOpen}
+        onClose={() => setIsCalendarDialogOpen(false)}
+        webcalUrl={calendarWebcalUrl}
+      />
 
       {error ? (
         <section className="rounded-lg border border-error/30 bg-error/10 p-4 text-sm font-semibold text-error">
@@ -229,6 +245,25 @@ export function DashboardPage() {
       ) : null}
     </section>
   );
+}
+
+function shouldOpenCalendarDirectly(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function toWebcalUrl(feedUrl: string): string | null {
+  const feedLocation = new URL(feedUrl);
+  const isLocalHost = feedLocation.hostname === "localhost" || feedLocation.hostname === "127.0.0.1";
+
+  if (isLocalHost) {
+    return feedUrl;
+  }
+
+  return `webcal://${feedLocation.host}${feedLocation.pathname}${feedLocation.search}`;
 }
 
 function formatCardDate(matchDay: MatchDay): string {
