@@ -2,6 +2,7 @@ export interface CloudflareEnv {
   SUPABASE_URL?: string;
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SESSION_SECRET?: string;
+  CALENDAR_FEED_TOKEN?: string;
 }
 
 const requiredServerSecrets = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SESSION_SECRET"] as const;

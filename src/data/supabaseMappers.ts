@@ -5,8 +5,10 @@ export type DbPosition = "setter" | "outside" | "middle" | "opposite" | "libero"
 export type DbAvailabilityStatus = "available" | "unavailable" | "maybe" | "unknown";
 export type DbPollType = "match" | "date-finding";
 export type DbPollStatus = "open" | "archived" | "cancelled";
+export type DbMatchAppointmentStatus = "planned" | "scheduled" | "cancelled";
 export type DbHomeAway = "home" | "away" | "unknown";
 export type DbPlayerRole = "member" | "training_member";
+export type DbSourceType = "custom" | "league";
 
 export interface DbPlayerRow {
   id: string;
@@ -36,17 +38,47 @@ export interface DbAvailabilityPollRow {
   title: string;
   poll_type: DbPollType;
   poll_status: DbPollStatus;
-  starts_at: string | null;
-  location: string | null;
-  home_away: DbHomeAway;
-  opponent_name: string | null;
   notes: string | null;
-  source_type: "custom" | "league";
-  league_fixture_external_id: string | null;
+  match_appointment_id: string;
   created_by_player_id: string | null;
   archived_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DbMatchRow {
+  id: string;
+  source_type: DbSourceType;
+  league_game_nr: string | null;
+  season_key: string | null;
+  team_key: string | null;
+  opponent_name: string;
+  home_away: DbHomeAway;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbMatchAppointmentRow {
+  id: string;
+  match_id: string;
+  starts_at: string | null;
+  has_time: boolean;
+  status: DbMatchAppointmentStatus;
+  location: string | null;
+  source_type: DbSourceType;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DbMatchAppointmentWithMatchRow extends DbMatchAppointmentRow {
+  matches?: DbMatchRow | null;
+}
+
+export interface DbAvailabilityPollWithAppointmentRow extends DbAvailabilityPollRow {
+  match_appointments?: DbMatchAppointmentWithMatchRow | null;
 }
 
 export interface DbAvailabilityResponseRow {
@@ -144,38 +176,31 @@ export function mapDbPollToAvailabilityPoll(
   row: DbAvailabilityPollRow,
   responses: DbAvailabilityResponseRow[] = [],
 ): AvailabilityPoll {
-  const startsAt = row.starts_at ? splitIsoInBerlin(row.starts_at) : { date: "", time: undefined };
-
   return {
     id: row.id,
     title: row.title,
     type: row.poll_type,
     status: row.poll_status,
-    date: startsAt.date,
-    time: startsAt.time,
-    opponent: row.opponent_name ?? "",
-    homeAway: row.home_away,
-    location: row.location ?? undefined,
-    sourceFixtureId: row.league_fixture_external_id ?? undefined,
+    date: "",
+    time: undefined,
+    opponent: "",
+    homeAway: "unknown",
+    location: undefined,
+    sourceFixtureId: undefined,
     availability: responses.filter((response) => response.poll_id === row.id).map(mapDbResponseToMatchAvailability),
   };
 }
 
-export function availabilityPollToDbInsert(poll: AvailabilityPoll): Omit<
-  DbAvailabilityPollRow,
-  "created_at" | "updated_at" | "archived_at" | "created_by_player_id" | "notes"
-> {
+export function availabilityPollToDbInsert(
+  poll: AvailabilityPoll,
+  matchAppointmentId: string,
+): Omit<DbAvailabilityPollRow, "created_at" | "updated_at" | "archived_at" | "created_by_player_id" | "notes"> {
   return {
     id: poll.id,
     title: poll.title,
     poll_type: poll.type,
     poll_status: poll.status,
-    starts_at: poll.date ? berlinDateTimeToIso(poll.date, poll.time) : null,
-    location: poll.location ?? null,
-    home_away: poll.homeAway,
-    opponent_name: poll.opponent || null,
-    source_type: poll.sourceFixtureId ? "league" : "custom",
-    league_fixture_external_id: poll.sourceFixtureId ?? null,
+    match_appointment_id: matchAppointmentId,
   };
 }
 
@@ -202,17 +227,6 @@ export function berlinDateTimeToIso(date: string, time = "00:00"): string {
   }
 
   return new Date(utcMs).toISOString();
-}
-
-function splitIsoInBerlin(isoValue: string): { date: string; time?: string } {
-  const parts = getZonedParts(new Date(isoValue), APP_TIME_ZONE);
-  const date = `${parts.year}-${parts.month}-${parts.day}`;
-  const time = `${parts.hour}:${parts.minute}`;
-
-  return {
-    date,
-    time: time === "00:00" ? undefined : time,
-  };
 }
 
 function getTimeZoneOffsetMs(date: Date, timeZone: string): number {

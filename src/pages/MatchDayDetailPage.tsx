@@ -13,7 +13,7 @@ import { usePlanner } from "../state/plannerStore";
 export function MatchDayDetailPage() {
   const navigate = useNavigate();
   const { matchDayId } = useParams();
-  const { deletePoll, matchDays, players } = usePlanner();
+  const { deletePoll, matchDays, players, updatePoll } = usePlanner();
   const { selectedPlayerId, selectedPlayerIsAdmin } = useSession();
   const matchDay = matchDays.find((item) => item.id === matchDayId);
   const canAdmin = selectedPlayerIsAdmin;
@@ -49,6 +49,11 @@ export function MatchDayDetailPage() {
     navigate("/");
   }
 
+  async function handleFinalize() {
+    await updatePoll({ pollId: currentMatchDay.id, finalizePlannedAppointment: true });
+    navigate("/");
+  }
+
   return (
     <section className="space-y-5">
       <div className="rounded-lg border border-primary/15 bg-base-100 p-4 shadow-sm">
@@ -68,7 +73,14 @@ export function MatchDayDetailPage() {
               <TrafficLight compact status={analysis.status} />
             </div>
           </div>
-          {canAdmin ? <AdminActions matchDayId={currentMatchDay.id} onDelete={handleDelete} /> : null}
+          {canAdmin ? (
+            <AdminActions
+              canFinalize={currentMatchDay.type === "date-finding" && currentMatchDay.appointmentStatus === "planned"}
+              matchDayId={currentMatchDay.id}
+              onDelete={handleDelete}
+              onFinalize={handleFinalize}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -140,9 +152,29 @@ function buildResponseGroups(rows: PlayerRow[]) {
   }));
 }
 
-function AdminActions({ matchDayId, onDelete }: { matchDayId: string; onDelete: () => void }) {
+function AdminActions({
+  matchDayId,
+  onDelete,
+  onFinalize,
+  canFinalize,
+}: {
+  matchDayId: string;
+  onDelete: () => void;
+  onFinalize: () => void;
+  canFinalize: boolean;
+}) {
   return (
     <div className="flex shrink-0 items-center gap-1.5">
+      {canFinalize ? (
+        <button
+          className="btn h-8 min-h-0 rounded-lg bg-primary px-2 py-0 text-primary-content"
+          onClick={onFinalize}
+          title="Als finalen Termin festlegen"
+          type="button"
+        >
+          Festlegen
+        </button>
+      ) : null}
       <Link
         aria-label="Abstimmung bearbeiten"
         className="btn h-8 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-base-content"

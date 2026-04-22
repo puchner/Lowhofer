@@ -1,6 +1,7 @@
 import {
   berlinDateTimeToIso,
   DbAvailabilityPollRow,
+  DbAvailabilityPollWithAppointmentRow,
   DbAvailabilityResponseRow,
   DbHomeAway,
   DbPollStatus,
@@ -17,6 +18,9 @@ export interface ApiAvailabilityResponse {
 
 export interface ApiPoll {
   id: string;
+  matchId?: string;
+  appointmentId?: string;
+  appointmentStatus?: string;
   title: string;
   type: DbPollType;
   status: DbPollStatus;
@@ -26,6 +30,7 @@ export interface ApiPoll {
   homeAway: DbHomeAway;
   location?: string;
   sourceFixtureId?: string;
+  leagueGameNr?: string;
   availability: ApiAvailabilityResponse[];
 }
 
@@ -33,12 +38,18 @@ export interface PollRequestBody {
   title?: string;
   type?: DbPollType;
   status?: DbPollStatus;
+  finalizePlannedAppointment?: boolean;
   date?: string;
   time?: string;
   opponent?: string;
   homeAway?: DbHomeAway;
   location?: string;
   sourceFixtureId?: string;
+  suggestions?: Array<{
+    date?: string;
+    time?: string;
+    location?: string;
+  }>;
 }
 
 export interface ResponseRequestBody {
@@ -47,19 +58,55 @@ export interface ResponseRequestBody {
 }
 
 export function mapPoll(row: DbAvailabilityPollRow, responses: DbAvailabilityResponseRow[]): ApiPoll {
-  const startsAt = row.starts_at ? splitIsoInBerlin(row.starts_at) : { date: "", time: undefined };
+  return {
+    id: row.id,
+    matchId: undefined,
+    appointmentId: row.match_appointment_id,
+    appointmentStatus: undefined,
+    title: row.title,
+    type: row.poll_type,
+    status: row.poll_status,
+    date: "",
+    time: undefined,
+    opponent: "",
+    homeAway: "unknown",
+    location: undefined,
+    sourceFixtureId: undefined,
+    leagueGameNr: undefined,
+    availability: responses
+      .filter((response) => response.poll_id === row.id)
+      .map((response) => ({
+        matchDayId: response.poll_id,
+        playerId: response.player_id,
+        status: dbStatusToAvailabilityStatus(response.status),
+        comment: response.comment ?? undefined,
+      })),
+  };
+}
+
+export function mapPollWithAppointment(
+  row: DbAvailabilityPollWithAppointmentRow,
+  responses: DbAvailabilityResponseRow[],
+): ApiPoll {
+  const appointment = row.match_appointments ?? null;
+  const match = appointment?.matches ?? null;
+  const startsAt = appointment?.starts_at ? splitIsoInBerlin(appointment.starts_at) : { date: "", time: undefined };
 
   return {
     id: row.id,
+    matchId: match?.id,
+    appointmentId: appointment?.id ?? row.match_appointment_id,
+    appointmentStatus: appointment?.status,
     title: row.title,
     type: row.poll_type,
     status: row.poll_status,
     date: startsAt.date,
     time: startsAt.time,
-    opponent: row.opponent_name ?? "",
-    homeAway: row.home_away,
-    location: row.location ?? undefined,
-    sourceFixtureId: row.league_fixture_external_id ?? undefined,
+    opponent: match?.opponent_name ?? "",
+    homeAway: match?.home_away ?? "unknown",
+    location: appointment?.location ?? undefined,
+    sourceFixtureId: match?.league_game_nr ?? undefined,
+    leagueGameNr: match?.league_game_nr ?? undefined,
     availability: responses
       .filter((response) => response.poll_id === row.id)
       .map((response) => ({
@@ -74,21 +121,12 @@ export function mapPoll(row: DbAvailabilityPollRow, responses: DbAvailabilityRes
 export function buildPollInsert(body: PollRequestBody, createdByPlayerId: string): Record<string, unknown> {
   const title = normalizeRequiredText(body.title, "title");
   const type = normalizePollType(body.type);
-  const date = normalizeRequiredText(body.date, "date");
-  const opponent = normalizeRequiredText(body.opponent, "opponent");
-  const homeAway = normalizeHomeAway(body.homeAway);
-  const startsAt = berlinDateTimeToIso(date, body.time || undefined);
 
   return {
     title,
     poll_type: type,
     poll_status: "open",
-    starts_at: startsAt,
-    location: normalizeOptionalText(body.location),
-    home_away: homeAway,
-    opponent_name: opponent,
-    source_type: body.sourceFixtureId ? "league" : "custom",
-    league_fixture_external_id: normalizeOptionalText(body.sourceFixtureId),
+    notes: null,
     created_by_player_id: createdByPlayerId,
   };
 }
@@ -113,6 +151,10 @@ export function buildPollPatch(body: PollRequestBody): Record<string, unknown> {
     patch.starts_at = berlinDateTimeToIso(normalizeRequiredText(body.date, "date"), body.time || undefined);
   }
 
+  if (body.location !== undefined) {
+    patch.location = normalizeOptionalText(body.location);
+  }
+
   if (body.opponent !== undefined) {
     patch.opponent_name = normalizeRequiredText(body.opponent, "opponent");
   }
@@ -121,13 +163,9 @@ export function buildPollPatch(body: PollRequestBody): Record<string, unknown> {
     patch.home_away = normalizeHomeAway(body.homeAway);
   }
 
-  if (body.location !== undefined) {
-    patch.location = normalizeOptionalText(body.location);
-  }
-
   if (body.sourceFixtureId !== undefined) {
     patch.source_type = body.sourceFixtureId ? "league" : "custom";
-    patch.league_fixture_external_id = normalizeOptionalText(body.sourceFixtureId);
+    patch.league_game_nr = normalizeOptionalText(body.sourceFixtureId);
   }
 
   return patch;

@@ -6,6 +6,12 @@ import { usePlanner } from "../state/plannerStore";
 
 const todayKey = new Date().toISOString().slice(0, 10);
 
+type SuggestionDraft = {
+  date: string;
+  time: string;
+  location: string;
+};
+
 export function NewPollPage() {
   const navigate = useNavigate();
   const { createPoll, leagueFixtures, matchDays } = usePlanner();
@@ -16,7 +22,10 @@ export function NewPollPage() {
   const [time, setTime] = useState("");
   const [type, setType] = useState<PollType>("date-finding");
   const [homeAway, setHomeAway] = useState<"home" | "away" | "unknown">("unknown");
-  const existingFixtureIds = new Set(matchDays.map((matchDay) => matchDay.sourceFixtureId).filter(Boolean));
+  const [suggestions, setSuggestions] = useState<SuggestionDraft[]>([{ date: todayKey, time: "", location: "" }]);
+  const existingFixtureIds = new Set(
+    matchDays.map((matchDay) => matchDay.leagueGameNr ?? matchDay.sourceFixtureId).filter(Boolean),
+  );
 
   async function createFromFixture(fixtureId: string) {
     const fixture = leagueFixtures.find((item) => item.id === fixtureId);
@@ -43,10 +52,18 @@ export function NewPollPage() {
     await createPoll({
       title: title.trim() || opponent.trim(),
       type,
-      date,
-      time: time || undefined,
+      date: type === "match" ? date : undefined,
+      time: type === "match" ? time || undefined : undefined,
       opponent: opponent.trim() || "Offen",
       homeAway,
+      suggestions:
+        type === "date-finding"
+          ? suggestions.map((suggestion) => ({
+              date: suggestion.date,
+              time: suggestion.time || undefined,
+              location: suggestion.location || undefined,
+            }))
+          : undefined,
     });
     navigate("/");
   }
@@ -122,21 +139,87 @@ export function NewPollPage() {
           required
           value={opponent}
         />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <input
-            className="input input-bordered min-h-11 w-full rounded-lg"
-            onChange={(event) => setDate(event.target.value)}
-            required
-            type="date"
-            value={date}
-          />
-          <input
-            className="input input-bordered min-h-11 w-full rounded-lg"
-            onChange={(event) => setTime(event.target.value)}
-            type="time"
-            value={time}
-          />
-        </div>
+        {type === "match" ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              className="input input-bordered min-h-11 w-full rounded-lg"
+              onChange={(event) => setDate(event.target.value)}
+              required
+              type="date"
+              value={date}
+            />
+            <input
+              className="input input-bordered min-h-11 w-full rounded-lg"
+              onChange={(event) => setTime(event.target.value)}
+              type="time"
+              value={time}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase text-base-content/60">Terminvorschläge</p>
+            {suggestions.map((suggestion, index) => (
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]" key={`${index}-${suggestion.date}-${suggestion.time}`}>
+                <input
+                  className="input input-bordered min-h-11 w-full rounded-lg"
+                  onChange={(event) =>
+                    setSuggestions((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, date: event.target.value } : item,
+                      ),
+                    )
+                  }
+                  required
+                  type="date"
+                  value={suggestion.date}
+                />
+                <input
+                  className="input input-bordered min-h-11 w-full rounded-lg"
+                  onChange={(event) =>
+                    setSuggestions((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, time: event.target.value } : item,
+                      ),
+                    )
+                  }
+                  type="time"
+                  value={suggestion.time}
+                />
+                <input
+                  className="input input-bordered min-h-11 w-full rounded-lg"
+                  onChange={(event) =>
+                    setSuggestions((current) =>
+                      current.map((item, itemIndex) =>
+                        itemIndex === index ? { ...item, location: event.target.value } : item,
+                      ),
+                    )
+                  }
+                  placeholder="Ort"
+                  value={suggestion.location}
+                />
+                <button
+                  className="btn min-h-11 rounded-lg"
+                  disabled={suggestions.length === 1}
+                  onClick={() =>
+                    setSuggestions((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                  }
+                  type="button"
+                >
+                  Entfernen
+                </button>
+              </div>
+            ))}
+            <button
+              className="btn btn-outline min-h-11 rounded-lg"
+              onClick={() =>
+                setSuggestions((current) => [...current, { date: todayKey, time: "", location: "" }])
+              }
+              type="button"
+            >
+              + Terminvorschlag
+            </button>
+          </div>
+        )}
         <select
           className="select select-bordered min-h-11 w-full rounded-lg"
           onChange={(event) => setHomeAway(event.target.value as "home" | "away" | "unknown")}

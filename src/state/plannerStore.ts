@@ -10,16 +10,22 @@ export interface UpdateAvailabilityInput {
 export interface CreatePollInput {
   title: string;
   type: PollType;
-  date: string;
+  date?: string;
   time?: string;
   opponent: string;
   homeAway: "home" | "away" | "unknown";
   location?: string;
   sourceFixtureId?: string;
+  suggestions?: Array<{
+    date: string;
+    time?: string;
+    location?: string;
+  }>;
 }
 
 export interface UpdatePollInput {
   pollId: string;
+  finalizePlannedAppointment?: boolean;
   title?: string;
   type?: PollType;
   status?: "open" | "archived" | "cancelled";
@@ -36,7 +42,7 @@ export interface PlannerContextValue {
   leagueFixtures: LeagueFixture[];
   isLoading: boolean;
   error: string | null;
-  createPoll: (input: CreatePollInput) => Promise<MatchDay>;
+  createPoll: (input: CreatePollInput) => Promise<MatchDay[]>;
   deletePoll: (pollId: string) => Promise<void>;
   refresh: () => Promise<void>;
   updatePoll: (input: UpdatePollInput) => Promise<void>;

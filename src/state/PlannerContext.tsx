@@ -76,16 +76,21 @@ export function PlannerProvider({ children }: PropsWithChildren) {
     );
   }
 
-  async function createPoll(input: CreatePollInput): Promise<MatchDay> {
-    const newPoll = await createPollApi(input);
+  async function createPoll(input: CreatePollInput): Promise<MatchDay[]> {
+    const newPolls = await createPollApi(input);
 
-    setMatchDays((currentMatchDays) => sortMatchDays([...currentMatchDays, newPoll]));
+    setMatchDays((currentMatchDays) => sortMatchDays([...currentMatchDays, ...newPolls]));
 
-    return newPoll;
+    return newPolls;
   }
 
   async function updatePoll(input: UpdatePollInput) {
     const updatedPoll = await updatePollApi(input);
+
+    if (input.finalizePlannedAppointment) {
+      await refresh();
+      return;
+    }
 
     setMatchDays((currentMatchDays) =>
       sortMatchDays(currentMatchDays.map((matchDay) => (matchDay.id === updatedPoll.id ? updatedPoll : matchDay))),

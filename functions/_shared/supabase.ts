@@ -1,6 +1,12 @@
 import type {
   DbAvailabilityPollRow,
+  DbAvailabilityPollWithAppointmentRow,
   DbAvailabilityResponseRow,
+  DbHomeAway,
+  DbMatchAppointmentRow,
+  DbMatchAppointmentWithMatchRow,
+  DbMatchRow,
+  DbSourceType,
   DbPlayerRow,
   DbPlayerWithPositions,
 } from "../../src/data/supabaseMappers";
@@ -12,8 +18,8 @@ interface TeamSettingsPasswordRow {
 
 const playerSelect =
   "id,display_name,gender,is_active,is_admin,role,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,created_at,updated_at";
-const legacyPlayerSelect = "id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at";
-const legacyCorePlayerSelect = "id,display_name,gender,is_active,is_admin,sort_order,created_at,updated_at";
+const pollWithAppointmentSelect =
+  "*,match_appointments!availability_polls_match_appointment_id_fkey(*,matches(*))";
 
 export async function getTeamPasswordHash(env: CloudflareEnv): Promise<string | null> {
   const rows = await supabaseFetch<TeamSettingsPasswordRow[]>(env, "/team_settings?select=team_password_hash&limit=1");
@@ -26,28 +32,25 @@ export async function listActivePlayers(env: CloudflareEnv): Promise<DbPlayerWit
 }
 
 export async function listActiveTeamPlayers(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
-  return supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
+  return supabaseFetch<DbPlayerWithPositions[]>(
     env,
     `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&role=neq.training_member&order=sort_order.asc`,
-    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
   );
 }
 
 export async function listActiveLoginAccounts(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
-  return supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
+  return supabaseFetch<DbPlayerWithPositions[]>(
     env,
     `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
-    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&order=sort_order.asc`,
   );
 }
 
 export async function getActivePlayer(env: CloudflareEnv, playerId: string): Promise<DbPlayerRow | null> {
-  const rows = await supabaseFetchWithLegacyPlayerFallback<DbPlayerRow[]>(
+  const rows = await supabaseFetch<DbPlayerRow[]>(
     env,
     `/players?select=id,display_name,gender,is_active,is_admin,role,sort_order,created_at,updated_at&id=eq.${encodeURIComponent(
       playerId,
     )}&is_active=eq.true&limit=1`,
-    `/players?select=${legacyCorePlayerSelect}&id=eq.${encodeURIComponent(playerId)}&is_active=eq.true&limit=1`,
   );
 
   return rows[0] ?? null;
@@ -57,12 +60,9 @@ export async function getPlayerWithPositions(
   env: CloudflareEnv,
   playerId: string,
 ): Promise<DbPlayerWithPositions | null> {
-  const rows = await supabaseFetchWithLegacyPlayerFallback<DbPlayerWithPositions[]>(
+  const rows = await supabaseFetch<DbPlayerWithPositions[]>(
     env,
     `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&id=eq.${encodeURIComponent(
-      playerId,
-    )}&is_active=eq.true&limit=1`,
-    `/players?select=${legacyPlayerSelect},player_positions(id,player_id,position,is_primary)&id=eq.${encodeURIComponent(
       playerId,
     )}&is_active=eq.true&limit=1`,
   );
@@ -130,7 +130,14 @@ export async function replacePlayerPositions(
 export async function listPolls(env: CloudflareEnv): Promise<DbAvailabilityPollRow[]> {
   return supabaseFetch<DbAvailabilityPollRow[]>(
     env,
-    "/availability_polls?select=*&order=starts_at.asc.nullslast,created_at.asc",
+    "/availability_polls?select=*&order=created_at.asc",
+  );
+}
+
+export async function listPollsWithAppointments(env: CloudflareEnv): Promise<DbAvailabilityPollWithAppointmentRow[]> {
+  return supabaseFetch<DbAvailabilityPollWithAppointmentRow[]>(
+    env,
+    `/availability_polls?select=${pollWithAppointmentSelect}&order=created_at.asc`,
   );
 }
 
@@ -138,6 +145,18 @@ export async function getPoll(env: CloudflareEnv, pollId: string): Promise<DbAva
   const rows = await supabaseFetch<DbAvailabilityPollRow[]>(
     env,
     `/availability_polls?select=*&id=eq.${encodeURIComponent(pollId)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function getPollWithAppointment(
+  env: CloudflareEnv,
+  pollId: string,
+): Promise<DbAvailabilityPollWithAppointmentRow | null> {
+  const rows = await supabaseFetch<DbAvailabilityPollWithAppointmentRow[]>(
+    env,
+    `/availability_polls?select=${pollWithAppointmentSelect}&id=eq.${encodeURIComponent(pollId)}&limit=1`,
   );
 
   return rows[0] ?? null;
@@ -176,6 +195,17 @@ export async function createPoll(
   return rows[0];
 }
 
+export async function createPollForAppointment(
+  env: CloudflareEnv,
+  appointmentId: string,
+  poll: Record<string, unknown>,
+): Promise<DbAvailabilityPollRow> {
+  return createPoll(env, {
+    ...poll,
+    match_appointment_id: appointmentId,
+  });
+}
+
 export async function updatePoll(
   env: CloudflareEnv,
   pollId: string,
@@ -201,6 +231,215 @@ export async function deletePoll(env: CloudflareEnv, pollId: string): Promise<vo
   await supabaseFetch<void>(env, `/availability_polls?id=eq.${encodeURIComponent(pollId)}`, {
     method: "DELETE",
   });
+}
+
+export async function deleteAppointment(env: CloudflareEnv, appointmentId: string): Promise<void> {
+  await supabaseFetch<void>(env, `/match_appointments?id=eq.${encodeURIComponent(appointmentId)}`, {
+    method: "DELETE",
+  });
+}
+
+export interface LeagueMatchInput {
+  leagueGameNr: string;
+  seasonKey: string;
+  teamKey: string;
+  opponentName: string;
+  homeAway: DbHomeAway;
+  notes?: string | null;
+}
+
+export interface CustomMatchInput {
+  opponentName: string;
+  homeAway: DbHomeAway;
+  teamKey?: string | null;
+  notes?: string | null;
+}
+
+export interface AppointmentInput {
+  matchId: string;
+  startsAt?: string | null;
+  hasTime?: boolean;
+  status: DbMatchAppointmentRow["status"];
+  location?: string | null;
+  sourceType?: DbSourceType;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
+}
+
+export async function getMatch(env: CloudflareEnv, matchId: string): Promise<DbMatchRow | null> {
+  const rows = await supabaseFetch<DbMatchRow[]>(
+    env,
+    `/matches?select=*&id=eq.${encodeURIComponent(matchId)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function findLeagueMatch(
+  env: CloudflareEnv,
+  leagueGameNr: string,
+  seasonKey: string,
+  teamKey: string,
+): Promise<DbMatchRow | null> {
+  const rows = await supabaseFetch<DbMatchRow[]>(
+    env,
+    `/matches?select=*&source_type=eq.league&league_game_nr=eq.${encodeURIComponent(
+      leagueGameNr,
+    )}&season_key=eq.${encodeURIComponent(seasonKey)}&team_key=eq.${encodeURIComponent(teamKey)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function upsertLeagueMatch(env: CloudflareEnv, input: LeagueMatchInput): Promise<DbMatchRow> {
+  const existingMatch = await findLeagueMatch(env, input.leagueGameNr, input.seasonKey, input.teamKey);
+  const payload = {
+    source_type: "league",
+    league_game_nr: input.leagueGameNr,
+    season_key: input.seasonKey,
+    team_key: input.teamKey,
+    opponent_name: input.opponentName,
+    home_away: input.homeAway,
+    notes: input.notes ?? null,
+  };
+
+  if (existingMatch) {
+    const updatedMatch = await updateMatch(env, existingMatch.id, payload);
+
+    return updatedMatch ?? existingMatch;
+  }
+
+  return createMatch(env, payload);
+}
+
+export async function createCustomMatch(env: CloudflareEnv, input: CustomMatchInput): Promise<DbMatchRow> {
+  return createMatch(env, {
+    source_type: "custom",
+    league_game_nr: null,
+    season_key: null,
+    team_key: input.teamKey ?? "lowhofer",
+    opponent_name: input.opponentName,
+    home_away: input.homeAway,
+    notes: input.notes ?? null,
+  });
+}
+
+export async function createMatch(env: CloudflareEnv, match: Record<string, unknown>): Promise<DbMatchRow> {
+  const rows = await supabaseFetch<DbMatchRow[]>(env, "/matches", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(match),
+  });
+
+  return rows[0];
+}
+
+export async function updateMatch(
+  env: CloudflareEnv,
+  matchId: string,
+  patch: Record<string, unknown>,
+): Promise<DbMatchRow | null> {
+  const rows = await supabaseFetch<DbMatchRow[]>(env, `/matches?id=eq.${encodeURIComponent(matchId)}`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(patch),
+  });
+
+  return rows[0] ?? null;
+}
+
+export async function getAppointment(
+  env: CloudflareEnv,
+  appointmentId: string,
+): Promise<DbMatchAppointmentRow | null> {
+  const rows = await supabaseFetch<DbMatchAppointmentRow[]>(
+    env,
+    `/match_appointments?select=*&id=eq.${encodeURIComponent(appointmentId)}&limit=1`,
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function listAppointmentsForMatch(
+  env: CloudflareEnv,
+  matchId: string,
+): Promise<DbMatchAppointmentRow[]> {
+  return supabaseFetch<DbMatchAppointmentRow[]>(
+    env,
+    `/match_appointments?select=*&match_id=eq.${encodeURIComponent(matchId)}&order=starts_at.asc.nullslast,created_at.asc`,
+  );
+}
+
+export async function listScheduledCalendarAppointments(
+  env: CloudflareEnv,
+): Promise<DbMatchAppointmentWithMatchRow[]> {
+  return supabaseFetch<DbMatchAppointmentWithMatchRow[]>(
+    env,
+    "/match_appointments?select=*,matches(*)&status=eq.scheduled&starts_at=not.is.null&order=starts_at.asc",
+  );
+}
+
+export async function listPollsForAppointment(
+  env: CloudflareEnv,
+  appointmentId: string,
+): Promise<DbAvailabilityPollRow[]> {
+  return supabaseFetch<DbAvailabilityPollRow[]>(
+    env,
+    `/availability_polls?select=*&match_appointment_id=eq.${encodeURIComponent(appointmentId)}&order=created_at.asc`,
+  );
+}
+
+export async function createAppointment(env: CloudflareEnv, input: AppointmentInput): Promise<DbMatchAppointmentRow> {
+  const rows = await supabaseFetch<DbMatchAppointmentRow[]>(env, "/match_appointments", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify(appointmentInputToRow(input)),
+  });
+
+  return rows[0];
+}
+
+export async function updateAppointment(
+  env: CloudflareEnv,
+  appointmentId: string,
+  patch: Record<string, unknown>,
+): Promise<DbMatchAppointmentRow | null> {
+  const rows = await supabaseFetch<DbMatchAppointmentRow[]>(
+    env,
+    `/match_appointments?id=eq.${encodeURIComponent(appointmentId)}`,
+    {
+      method: "PATCH",
+      headers: {
+        "content-type": "application/json",
+        prefer: "return=representation",
+      },
+      body: JSON.stringify(patch),
+    },
+  );
+
+  return rows[0] ?? null;
+}
+
+function appointmentInputToRow(input: AppointmentInput): Record<string, unknown> {
+  return {
+    match_id: input.matchId,
+    starts_at: input.startsAt ?? null,
+    has_time: input.hasTime ?? Boolean(input.startsAt),
+    status: input.status,
+    location: input.location ?? null,
+    source_type: input.sourceType ?? "custom",
+    cancelled_at: input.cancelledAt ?? null,
+    cancellation_reason: input.cancellationReason ?? null,
+  };
 }
 
 export async function createResponses(
@@ -392,20 +631,4 @@ export async function supabaseFetch<T>(env: CloudflareEnv, path: string, init: R
   }
 
   return JSON.parse(text) as T;
-}
-
-async function supabaseFetchWithLegacyPlayerFallback<T>(
-  env: CloudflareEnv,
-  path: string,
-  legacyPath: string,
-): Promise<T> {
-  try {
-    return await supabaseFetch<T>(env, path);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("avatar_")) {
-      return supabaseFetch<T>(env, legacyPath);
-    }
-
-    throw error;
-  }
 }

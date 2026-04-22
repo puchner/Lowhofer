@@ -1,3 +1,5 @@
 SUPABASE_URL=https://example.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=replace-with-local-service-role-key
 SESSION_SECRET=replace-with-local-session-secret
+# Optional: Wenn gesetzt, muss /api/calendar.ics?token=... verwendet werden.
+CALENDAR_FEED_TOKEN=replace-with-calendar-feed-token

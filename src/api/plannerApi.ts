@@ -41,13 +41,13 @@ export async function fetchPolls(): Promise<MatchDay[]> {
   return body.polls;
 }
 
-export async function createPoll(input: CreatePollInput): Promise<MatchDay> {
-  const body = await requestJson<{ poll: MatchDay }>("/api/polls", {
+export async function createPoll(input: CreatePollInput): Promise<MatchDay[]> {
+  const body = await requestJson<{ polls: MatchDay[] }>("/api/polls", {
     method: "POST",
     body: JSON.stringify(input),
   });
 
-  return body.poll;
+  return body.polls;
 }
 
 export async function updatePoll(input: UpdatePollInput): Promise<MatchDay> {

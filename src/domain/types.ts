@@ -46,6 +46,7 @@ export interface MatchAvailability {
 
 export type PollType = "match" | "date-finding";
 export type PollStatus = "open" | "archived" | "cancelled";
+export type MatchAppointmentStatus = "planned" | "scheduled" | "cancelled";
 
 export interface LeagueFixture {
   id: string;
@@ -59,6 +60,9 @@ export interface LeagueFixture {
 
 export interface AvailabilityPoll {
   id: string;
+  matchId?: string;
+  appointmentId?: string;
+  appointmentStatus?: MatchAppointmentStatus;
   title: string;
   type: PollType;
   status: PollStatus;
@@ -68,6 +72,7 @@ export interface AvailabilityPoll {
   homeAway: "home" | "away" | "unknown";
   location?: string;
   sourceFixtureId?: string;
+  leagueGameNr?: string;
   availability: MatchAvailability[];
 }
 
