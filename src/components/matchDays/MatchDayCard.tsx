@@ -1,7 +1,7 @@
 import { BusFront, CircleHelp, House } from "lucide-react";
 import { Link } from "react-router-dom";
-import { leagueStandingsSnapshot } from "../../data/leagueSnapshot";
 import { analyzeMatchDay } from "../../domain/analyzeSquad";
+import { LeagueStanding } from "../../domain/leagueTypes";
 import { MatchDay, Player } from "../../domain/types";
 import { OutcomeProjection } from "../league/OutcomeProjection";
 import { TrafficLight } from "../ui/TrafficLight";
@@ -12,9 +12,10 @@ interface MatchDayCardProps {
   action?: React.ReactNode;
   headerAction?: React.ReactNode;
   detailPath?: string;
+  standings?: LeagueStanding[];
 }
 
-export function MatchDayCard({ detailPath, matchDay, players, action, headerAction }: MatchDayCardProps) {
+export function MatchDayCard({ detailPath, matchDay, players, action, headerAction, standings }: MatchDayCardProps) {
   const analysis = analyzeMatchDay(matchDay, players);
   const resolvedDetailPath = detailPath ?? `/match-days/${matchDay.id}`;
 
@@ -39,9 +40,11 @@ export function MatchDayCard({ detailPath, matchDay, players, action, headerActi
             <span className="badge badge-primary badge-sm">{analysis.availableCount} Zusagen</span>
             <TrafficLight compact status={analysis.status} />
           </div>
-          <div className="mt-1.5">
-            <OutcomeProjection matchDay={matchDay} standings={leagueStandingsSnapshot} />
-          </div>
+          {standings ? (
+            <div className="mt-1.5">
+              <OutcomeProjection matchDay={matchDay} standings={standings} />
+            </div>
+          ) : null}
         </div>
         {action ? <div className="w-full lg:max-w-72 lg:shrink-0">{action}</div> : null}
       </div>

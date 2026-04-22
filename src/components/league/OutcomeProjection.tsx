@@ -1,6 +1,6 @@
-import { LOWHOFER_TEAM_NAME } from "../../data/leagueSnapshot";
+import { Minus, MoveDownRight, MoveUpRight } from "lucide-react";
 import { MatchDay } from "../../domain/types";
-import { buildLowhoferOutcomeScenarios, sortStandings } from "../../domain/leagueTable";
+import { buildLowhoferOutcomeScenarios, getLowhoferRank } from "../../domain/leagueTable";
 import { LeagueStanding } from "../../domain/leagueTypes";
 
 interface OutcomeProjectionProps {
@@ -33,7 +33,7 @@ export function OutcomeProjection({ matchDay, standings }: OutcomeProjectionProp
             title={`Lowhofer waere auf Platz ${scenario.lowhoferRank}`}
           >
             <span>{scenario.label}</span>
-            <span>{formatRankChange(rankChange)}</span>
+            <RankChangeIcon change={rankChange} />
           </span>
         );
       })}
@@ -41,16 +41,16 @@ export function OutcomeProjection({ matchDay, standings }: OutcomeProjectionProp
   );
 }
 
-function formatRankChange(change: number): string {
+function RankChangeIcon({ change }: { change: number }) {
   if (change > 0) {
-    return `+${change}`;
+    return <MoveUpRight aria-label="Tabellenplatz steigt" className="h-3.5 w-3.5" strokeWidth={2.4} />;
   }
 
   if (change === 0) {
-    return "0";
+    return <Minus aria-label="Tabellenplatz bleibt gleich" className="h-3.5 w-3.5" strokeWidth={2.4} />;
   }
 
-  return `${change}`;
+  return <MoveDownRight aria-label="Tabellenplatz faellt" className="h-3.5 w-3.5" strokeWidth={2.4} />;
 }
 
 function getChangeClass(change: number): string {
@@ -62,9 +62,9 @@ function getChangeClass(change: number): string {
     return "bg-error/15 text-error";
   }
 
-  return "bg-warning/20 text-warning";
+  return "bg-slate-100 text-slate-700";
 }
 
 function getCurrentLowhoferRank(standings: LeagueStanding[]): number {
-  return sortStandings(standings).findIndex((standing) => standing.team === LOWHOFER_TEAM_NAME) + 1;
+  return getLowhoferRank(standings);
 }

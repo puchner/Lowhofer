@@ -1,13 +1,14 @@
 import { CalendarSync, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchCalendarFeedUrl } from "../api/plannerApi";
+import { fetchCalendarFeedUrl, fetchLeagueTable } from "../api/plannerApi";
 import { CalendarSubscriptionDialog } from "../components/calendar/CalendarSubscriptionDialog";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { groupMatchDays } from "../domain/matchDayGroups";
 import { getAllUpcomingMatchDays, getUpcomingMatchDays } from "../domain/matchDayFilters";
 import { isTrainingMemberRole } from "../domain/playerRoles";
+import { LeagueStanding } from "../domain/leagueTypes";
 import { AvailabilityStatus, MatchDay } from "../domain/types";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
@@ -20,6 +21,7 @@ export function DashboardPage() {
   const [calendarFeedUrl, setCalendarFeedUrl] = useState<string | null>(null);
   const [calendarWebcalUrl, setCalendarWebcalUrl] = useState<string | null>(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
+  const [leagueStandings, setLeagueStandings] = useState<LeagueStanding[] | null>(null);
   const activePlayerId = session.selectedPlayerId;
   const canAdmin = session.selectedPlayerIsAdmin;
   const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
@@ -27,6 +29,12 @@ export function DashboardPage() {
   const upcomingMatchDays = showAllMatchDays ? allUpcomingMatchDays : getUpcomingMatchDays(matchDays);
   const groupedMatchDays = groupMatchDays(upcomingMatchDays);
   const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
+
+  useEffect(() => {
+    fetchLeagueTable()
+      .then((tableData) => setLeagueStandings(tableData.standings))
+      .catch(() => {});
+  }, []);
 
   async function handleOpenCalendarFeed() {
     setIsOpeningCalendarFeed(true);
@@ -37,11 +45,10 @@ export function DashboardPage() {
 
       setCalendarFeedUrl(feedUrl);
       setCalendarWebcalUrl(webcalUrl);
+      setIsCalendarDialogOpen(true);
 
       if (shouldOpenCalendarDirectly()) {
         window.location.assign(webcalUrl ?? feedUrl);
-      } else {
-        setIsCalendarDialogOpen(true);
       }
     } catch (nextError) {
       window.alert(nextError instanceof Error ? nextError.message : "Kalender-Link konnte nicht geladen werden.");
@@ -148,6 +155,7 @@ export function DashboardPage() {
                 key={matchDay.id}
                 matchDay={matchDay}
                 players={players}
+                standings={leagueStandings ?? undefined}
               />
             );
           }

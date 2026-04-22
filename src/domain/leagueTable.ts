@@ -23,12 +23,12 @@ export function buildLowhoferOutcomeScenarios(
     return [];
   }
 
-  const currentLowhoferRank = getTeamRank(sortStandings(standings), LOWHOFER_TEAM_NAME);
+  const currentLowhoferRank = getLowhoferRank(standings);
 
   return LOWHOFER_OUTCOMES.map((outcome) => {
     const projectedStandings = applyLowhoferOutcome(standings, opponentName, outcome);
     const lowhoferStanding = projectedStandings.find((standing) => standing.team === LOWHOFER_TEAM_NAME);
-    const lowhoferRank = getTeamRank(projectedStandings, LOWHOFER_TEAM_NAME);
+    const lowhoferRank = getProjectedLowhoferRank(standings, opponentName, outcome);
 
     return {
       ...outcome,
@@ -37,6 +37,18 @@ export function buildLowhoferOutcomeScenarios(
       lowhoferPoints: lowhoferStanding?.points ?? 0,
     };
   });
+}
+
+export function getLowhoferRank(standings: LeagueStanding[]): number {
+  return getTeamRank(sortStandings(standings), LOWHOFER_TEAM_NAME);
+}
+
+export function getProjectedLowhoferRank(
+  standings: LeagueStanding[],
+  opponentName: string,
+  outcome: { lowhoferSets: number; opponentSets: number },
+): number {
+  return getLowhoferRank(applyLowhoferOutcome(standings, opponentName, outcome));
 }
 
 function applyLowhoferOutcome(
