@@ -7,14 +7,7 @@ export type AppUpdate = {
 };
 
 export const appUpdates: AppUpdate[] = [
-  {
-    id: "2026-04-22-calendar-and-match-model",
-    title: "Kalender-Abo",
-    description: "Spieltage koennen jetzt mit dem privaten Kalender synchronisiert werden.",
-    publishedAt: "2026-04-22T00:00:00.000Z",
-    category: "feature",
-  },
-  {
+    {
     id: "2026-04-14-appointments",
     title: "Termine im Blick",
     description: "Neue Termine anlegen und Rückmeldungen jetzt direkt mit optionaler Notiz erfassen.",
@@ -49,4 +42,11 @@ export const appUpdates: AppUpdate[] = [
     publishedAt: "2026-04-16T12:00:00.000Z",
     category: "feature",
   },
+  {
+    id: "2026-04-22-calendar-and-match-model",
+    title: "Kalender-Abo",
+    description: "Spieltage koennen jetzt mit dem privaten Kalender synchronisiert werden.",
+    publishedAt: "2026-04-22T00:00:00.000Z",
+    category: "feature",
+  }
 ];
