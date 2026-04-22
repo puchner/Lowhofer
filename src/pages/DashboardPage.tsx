@@ -1,6 +1,7 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { CalendarSync, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { fetchCalendarFeedUrl } from "../api/plannerApi";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { groupMatchDays } from "../domain/matchDayGroups";
@@ -14,6 +15,7 @@ export function DashboardPage() {
   const { deletePoll, error, isLoading, matchDays, players, updateAvailability, updatePoll } = usePlanner();
   const session = useSession();
   const [showAllMatchDays, setShowAllMatchDays] = useState(false);
+  const [isOpeningCalendarFeed, setIsOpeningCalendarFeed] = useState(false);
   const activePlayerId = session.selectedPlayerId;
   const canAdmin = session.selectedPlayerIsAdmin;
   const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
@@ -22,16 +24,50 @@ export function DashboardPage() {
   const groupedMatchDays = groupMatchDays(upcomingMatchDays);
   const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
 
+  async function handleOpenCalendarFeed() {
+    setIsOpeningCalendarFeed(true);
+
+    try {
+      const feedUrl = await fetchCalendarFeedUrl();
+      const feedLocation = new URL(feedUrl);
+      const isLocalHost = feedLocation.hostname === "localhost" || feedLocation.hostname === "127.0.0.1";
+      const targetUrl = isLocalHost ? feedUrl : `webcal://${feedLocation.host}${feedLocation.pathname}${feedLocation.search}`;
+
+      window.location.assign(targetUrl);
+    } catch (nextError) {
+      window.alert(nextError instanceof Error ? nextError.message : "Kalender-Link konnte nicht geladen werden.");
+    } finally {
+      setIsOpeningCalendarFeed(false);
+    }
+  }
+
   return (
     <section className="space-y-4 sm:space-y-5">
       <div>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-petrol-900 sm:text-3xl">Termine</h2>
-          {canAdmin ? (
-            <Link className="btn btn-secondary min-h-11 rounded-lg text-petrol-900" to="/polls/new">
-              + Abstimmung
-            </Link>
-          ) : null}
+          <div className="flex items-center gap-2">
+            <button
+              aria-label="Kalender abonnieren"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md text-petrol-900 transition hover:bg-base-200 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isOpeningCalendarFeed}
+              onClick={() => void handleOpenCalendarFeed()}
+              title="Kalender abonnieren"
+              type="button"
+            >
+              <CalendarSync aria-hidden="true" className="h-5 w-5" strokeWidth={2.2} />
+            </button>
+            {canAdmin ? (
+              <Link
+                aria-label="Abstimmung anlegen"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-md text-petrol-900 transition hover:bg-base-200"
+                title="Abstimmung anlegen"
+                to="/polls/new"
+              >
+                <Plus aria-hidden="true" className="h-5 w-5" strokeWidth={2.4} />
+              </Link>
+            ) : null}
+          </div>
         </div>
       </div>
 

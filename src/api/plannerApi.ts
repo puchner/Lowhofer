@@ -41,6 +41,12 @@ export async function fetchPolls(): Promise<MatchDay[]> {
   return body.polls;
 }
 
+export async function fetchCalendarFeedUrl(): Promise<string> {
+  const body = await requestJson<{ url: string }>("/api/calendar-feed");
+
+  return body.url;
+}
+
 export async function createPoll(input: CreatePollInput): Promise<MatchDay[]> {
   const body = await requestJson<{ polls: MatchDay[] }>("/api/polls", {
     method: "POST",
