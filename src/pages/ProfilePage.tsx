@@ -23,7 +23,7 @@ export function ProfilePage() {
   const planner = usePlanner();
   const [profile, setProfile] = useState<Player | null>(null);
   const [displayName, setDisplayName] = useState("");
-  const [gender, setGender] = useState<Gender>(Gender.Diverse);
+  const [gender, setGender] = useState<Gender>(Gender.Female);
   const [positions, setPositions] = useState<Position[]>([]);
   const [primaryPosition, setPrimaryPosition] = useState<Position | "">("");
   const [avatar, setAvatar] = useState<GeneratedAvatarOption>(generatedAvatarOptions[0]);

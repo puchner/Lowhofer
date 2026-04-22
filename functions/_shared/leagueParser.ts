@@ -48,16 +48,14 @@ export function parseLeagueTable(xmlText: string): ParsedLeagueTable {
 }
 
 export function parseLowhoferFixtures(xmlText: string): ParsedLeagueFixture[] {
-  const todayKey = new Date().toISOString().slice(0, 10);
-
   return [...xmlText.matchAll(/<game>([\s\S]*?)<\/game>/g)]
     .map((match) => parseGame(match[1]))
     .filter((fixture): fixture is ParsedLeagueFixture => fixture !== null)
-    .filter((fixture) => fixture.date === undefined || fixture.date >= todayKey)
     .sort((a, b) => (a.date ?? "9999-12-31").localeCompare(b.date ?? "9999-12-31"));
 }
 
 function parseGame(gameXml: string): ParsedLeagueFixture | null {
+  const todayKey = new Date().toISOString().slice(0, 10);
   const teamA = parseTeamName(gameXml, "team_a");
   const teamB = parseTeamName(gameXml, "team_b");
   const lowhoferIsTeamA = teamA === LOWHOFER_TEAM_NAME;
@@ -75,7 +73,11 @@ function parseGame(gameXml: string): ParsedLeagueFixture | null {
 
   const newDate = readTag(gameXml, "new_date");
   const originalDate = readTag(gameXml, "date");
-  const effectiveDate = isDateKey(newDate) ? newDate : isDateKey(originalDate) ? originalDate : undefined;
+  const effectiveDate = isDateKey(newDate)
+    ? newDate
+    : isDateKey(originalDate) && originalDate >= todayKey
+      ? originalDate
+      : undefined;
   const opponent = lowhoferIsTeamA ? teamB : teamA;
 
   return {

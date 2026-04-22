@@ -9,7 +9,6 @@ export enum Position {
 export enum Gender {
   Female = "female",
   Male = "male",
-  Diverse = "diverse",
 }
 
 export enum AvailabilityStatus {
