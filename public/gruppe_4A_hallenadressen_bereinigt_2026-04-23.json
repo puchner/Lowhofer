@@ -1,0 +1,63 @@
+{
+  "group": "4A",
+  "source_url": "https://www.volleyball-freizeit.de/adressen",
+  "retrieved_at": "2026-04-23",
+  "teams": [
+    {
+      "team": "BavUA",
+      "club": "SV Weißblau-Allianz",
+      "venue_name": null,
+      "address": "Osterwaldstr. 144, München",
+      "notes": "Parkplätze vorhanden."
+    },
+    {
+      "team": "Blockbusters",
+      "club": "TSV München-Milbertshofen e.V.",
+      "venue_name": "Lion Feuchtwanger Gymnasium",
+      "address": "Freiligrathstraße 71, München",
+      "notes": "Milbertshofen; zwei Trainingszeiten an derselben Halle."
+    },
+    {
+      "team": "Die lowhofer",
+      "club": "SV Lohhof",
+      "venue_name": "Sporthalle Carl Orff Gymnasium",
+      "address": "Münchner Ring 6, Unterschleißheim",
+      "notes": "Genug Parkplätze vorhanden."
+    },
+    {
+      "team": "ESV Freimann",
+      "club": "ESV München-Freimann e.V.",
+      "venue_name": "St. George's School Munich",
+      "address": "Lilienthalallee 47, München",
+      "notes": "Eingang zur Halle in der Zufahrt zur Warenannahme vom Bauhaus."
+    },
+    {
+      "team": "FIX WIE NIX",
+      "club": "Sportfreunde Harteck",
+      "venue_name": "Gymnasium München-Nord",
+      "address": "Knorrstraße 171, München",
+      "notes": "Ein Eintrag nennt nur 'Knorrstraße', ein weiterer 'Knorrstraße 171'; hier auf die vollständigere Adresse normalisiert."
+    },
+    {
+      "team": "Forza Ragazzi",
+      "club": null,
+      "venue_name": "Europäisches Patentamt, Bauteil 8",
+      "address": "Grasserstr. 9, München",
+      "notes": "Hintereingang; Treffpunkt an der Treppe; Parkplätze in der Tiefgarage auf der gegenüberliegenden Straßenseite."
+    },
+    {
+      "team": "Loud'n'Proud",
+      "club": "TSV Neuhausen Nymphenburg e.V.",
+      "venue_name": null,
+      "address": "Helmholtzstraße 6, München",
+      "notes": "Eingang an der Marlene-Dietrich-Str."
+    },
+    {
+      "team": "To The Top!",
+      "club": "ESV München",
+      "venue_name": null,
+      "address": "Margarethe-Danzi-Straße 21, München",
+      "notes": "Auf der Quellseite steht zusätzlich 'Jurij Modeß'; das wirkt eher wie ein Kontakt-/Freitextfeld als ein Hallenname und wurde daher nicht als venue_name übernommen."
+    }
+  ]
+}

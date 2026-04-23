@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { MapPin } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { MatchHostCard } from "../components/match/MatchHostCard";
 import { PollAdminActions } from "../components/polls/PollAdminActions";
@@ -6,6 +7,7 @@ import { PlayerPill } from "../components/players/PlayerPill";
 import { analyzeMatchDay } from "../domain/analyzeSquad";
 import { canFinalizeAppointment } from "../domain/pollHelpers";
 import { sortPlayersForCurrentUser } from "../domain/playerSorting";
+import { resolveVenueDetails } from "../domain/teamVenues";
 import { AvailabilityStatus, MatchAvailability, Player } from "../domain/types";
 import { StatusPill } from "../components/ui/StatusPill";
 import { TrafficLight } from "../components/ui/TrafficLight";
@@ -42,6 +44,7 @@ export function MatchDayDetailPage() {
   const currentMatchDay = matchDay;
   const analysis = analyzeMatchDay(currentMatchDay, players);
   const responseGroups = buildResponseGroups(playerRows);
+  const venueDetails = resolveVenueDetails(currentMatchDay.opponent, currentMatchDay.homeAway);
 
   async function handleDelete() {
     await deletePoll(currentMatchDay.id);
@@ -75,6 +78,28 @@ export function MatchDayDetailPage() {
             <span className="badge badge-primary badge-sm">{analysis.availableCount} Zusagen</span>
             <TrafficLight compact status={analysis.status} />
           </>
+        }
+        extra={
+          venueDetails ? (
+            <a
+              className="flex items-start gap-2 rounded-md bg-base-200/60 px-3 py-2 text-sm transition hover:bg-base-200"
+              href={venueDetails.mapsUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" strokeWidth={2.2} />
+              <div className="space-y-1">
+                {currentMatchDay.homeAway === "away" ? (
+                  <>
+                    {venueDetails.venueName ? <p className="font-semibold text-petrol-900">{venueDetails.venueName}</p> : null}
+                    {venueDetails.address ? <p className="text-base-content/80">{venueDetails.address}</p> : null}
+                  </>
+                ) : venueDetails.venueName ? (
+                  <p className="font-semibold text-petrol-900">{venueDetails.venueName}</p>
+                ) : null}
+              </div>
+            </a>
+          ) : undefined
         }
         opponent={currentMatchDay.opponent}
         time={currentMatchDay.time}

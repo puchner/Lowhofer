@@ -1,5 +1,5 @@
 import { BusFront, CircleHelp, House } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { formatMatchDateTime } from "../../domain/dateAndTimeUtils";
 
 interface MatchHostCardProps {
@@ -31,9 +31,11 @@ export function MatchHostCard({
   onClick,
   selected = false,
 }: MatchHostCardProps) {
+  const navigate = useNavigate();
   const frameClassName = `rounded-lg border bg-base-100 p-3 shadow-sm transition ${
     selected ? "border-primary bg-primary/5" : "border-primary/15"
-  } ${onClick ? "hover:border-primary/40" : "hover:border-secondary hover:shadow-md"}`;
+  } ${onClick || titleLinkTo ? "cursor-pointer hover:border-primary/40" : "hover:border-secondary hover:shadow-md"}`;
+  const clickablePath = onClick ? undefined : titleLinkTo;
   const titleNode = titleLinkTo ? (
     <Link
       className="block truncate text-base font-bold leading-snug text-petrol-900 underline-offset-4 hover:underline sm:text-lg"
@@ -64,15 +66,57 @@ export function MatchHostCard({
     </>
   );
 
-  if (onClick) {
+  if (onClick || clickablePath) {
+    function handleActivate() {
+      if (onClick) {
+        onClick();
+        return;
+      }
+
+      if (clickablePath) {
+        navigate(clickablePath);
+      }
+    }
+
     return (
-      <button className={`${frameClassName} w-full text-left`} onClick={onClick} type="button">
+      <article
+        className={frameClassName}
+        onClick={(event) => {
+          if (shouldIgnoreCardActivation(event.target)) {
+            return;
+          }
+
+          handleActivate();
+        }}
+        onKeyDown={(event) => {
+          if (shouldIgnoreCardActivation(event.target)) {
+            return;
+          }
+
+          if (event.key !== "Enter" && event.key !== " ") {
+            return;
+          }
+
+          event.preventDefault();
+          handleActivate();
+        }}
+        role="link"
+        tabIndex={0}
+      >
         {content}
-      </button>
+      </article>
     );
   }
 
   return <article className={frameClassName}>{content}</article>;
+}
+
+function shouldIgnoreCardActivation(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(target.closest("a, button, input, textarea, select, label, form"));
 }
 
 export function HomeAwayIcon({

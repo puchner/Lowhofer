@@ -7,7 +7,7 @@ export type AppUpdate = {
 };
 
 export const appUpdates: AppUpdate[] = [
-    {
+  {
     id: "2026-04-14-appointments",
     title: "Termine im Blick",
     description: "Neue Termine anlegen und Rückmeldungen jetzt direkt mit optionaler Notiz erfassen.",
@@ -47,6 +47,13 @@ export const appUpdates: AppUpdate[] = [
     title: "Kalender-Abo",
     description: "Spieltage koennen jetzt mit dem privaten Kalender synchronisiert werden.",
     publishedAt: "2026-04-22T00:00:00.000Z",
+    category: "feature",
+  },
+  {
+    id: "2026-04-23-away-venues",
+    title: "Verfahren unmöglich",
+    description: "Bei Auswärtsspielen ist die Halle des Gegners jetzt in den Matchdetails verlinkt.",
+    publishedAt: "2026-04-23T00:00:00.000Z",
     category: "feature",
   }
 ];

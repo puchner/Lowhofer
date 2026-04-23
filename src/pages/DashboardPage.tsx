@@ -1,6 +1,6 @@
 import { CalendarSync, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { fetchCalendarFeedUrl, fetchLeagueTable } from "../api/plannerApi";
 import { CalendarSubscriptionDialog } from "../components/calendar/CalendarSubscriptionDialog";
 import { HomeAwayIcon } from "../components/match/MatchHostCard";
@@ -20,6 +20,7 @@ import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const { deletePoll, error, isLoading, matchDays, players, refresh, updateAvailability, updatePoll } = usePlanner();
   const session = useSession();
   const [isOpeningCalendarFeed, setIsOpeningCalendarFeed] = useState(false);
@@ -180,13 +181,34 @@ export function DashboardPage() {
                   const analysis = analyzeMatchDay(matchDay, players);
 
                   return (
-                    <article className="rounded-lg border border-base-300 p-3" key={matchDay.id}>
+                    <article
+                      className="cursor-pointer rounded-lg border border-base-300 p-3 transition hover:border-primary/40"
+                      key={matchDay.id}
+                      onClick={(event) => {
+                        if (shouldIgnoreCardActivation(event.target)) {
+                          return;
+                        }
+
+                        navigate(`/match-days/${matchDay.id}`);
+                      }}
+                      onKeyDown={(event) => {
+                        if (shouldIgnoreCardActivation(event.target)) {
+                          return;
+                        }
+
+                        if (event.key !== "Enter" && event.key !== " ") {
+                          return;
+                        }
+
+                        event.preventDefault();
+                        navigate(`/match-days/${matchDay.id}`);
+                      }}
+                      role="link"
+                      tabIndex={0}
+                    >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0">
-                          <Link
-                            className="font-semibold text-petrol-900 underline-offset-4 hover:underline"
-                            to={`/match-days/${matchDay.id}`}
-                          >
+                          <Link className="font-semibold text-petrol-900 underline-offset-4 hover:underline" to={`/match-days/${matchDay.id}`}>
                             {formatMatchDateTime(matchDay.date, matchDay.time)}
                           </Link>
                           {matchDay.location ? <p className="mt-1 text-sm text-base-content/70">{matchDay.location}</p> : null}
@@ -242,6 +264,14 @@ export function DashboardPage() {
 
     await refresh();
   }
+}
+
+function shouldIgnoreCardActivation(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) {
+    return false;
+  }
+
+  return Boolean(target.closest("a, button, input, textarea, select, label, form"));
 }
 
 function shouldOpenCalendarDirectly(): boolean {
