@@ -25,7 +25,6 @@
     "pages:dev": "npm run build && wrangler pages dev dist",
     "pages:deploy": "npm run build && wrangler pages deploy dist",
     "deploy": "npm run pages:deploy",
-    "import:league": "node scripts/importLeagueData.mjs",
     "hash:password": "node scripts/createPasswordHash.mjs",
     "wrangler:version": "wrangler --version"
   },

@@ -4,7 +4,7 @@ import { dirname, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const relaunchSchemaPath = resolve(rootDir, "supabase/relaunch_schema.sql");
+const relaunchSchemaPath = resolve(rootDir, "supabase/schema/current.sql");
 const cloneDumpPath = resolve(rootDir, "supabase/local/prod_clone.sql");
 const generatedDumpPath = resolve(rootDir, "supabase/local/generated_test_data.sql");
 

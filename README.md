@@ -29,7 +29,7 @@ Das macht folgendes:
 - startet den lokalen Supabase-Stack
 - erzeugt `.dev.vars` mit den lokalen Supabase-Zugangsdaten fuer Wrangler
 - setzt die lokale DB neu auf
-- spielt `supabase/relaunch_schema.sql` ein
+- spielt `supabase/schema/current.sql` ein
 - importiert entweder `supabase/local/prod_clone.sql` oder generiert lokale Testdaten
 - aktiviert lokal `LOCAL_TEST_DATA=true`, damit Tabellen- und Fixture-Ansichten die generierten Testdaten stabil verwenden
 
@@ -78,7 +78,7 @@ Lege alternativ einen SQL-Dump unter `supabase/local/prod_clone.sql` ab und fueh
 npm run local:reset
 ```
 
-Empfohlen ist ein `data-only` Dump aus dem `public`-Schema. Die lokale Installation spielt zuerst `supabase/relaunch_schema.sql` ein und importiert danach den Dump. Einen Repo-Seed braucht ihr dafuer nicht.
+Empfohlen ist ein `data-only` Dump aus dem `public`-Schema. Die lokale Installation spielt zuerst `supabase/schema/current.sql` ein und importiert danach den Dump. Einen Repo-Seed braucht ihr dafuer nicht.
 
 Beispiel mit Supabase-CLI gegen eine entfernte DB:
 
@@ -123,13 +123,14 @@ Das Frontend spricht fuer MVP-Geschaeftsdaten mit `/api/*` und nutzt keinen dire
 
 ## Supabase
 
-Das Datenmodell fuer Paket 2 liegt unter `supabase/`.
+Das aktuelle Datenmodell liegt unter `supabase/`.
 
-- `supabase/migrations/202604150001_create_core_schema.sql` erstellt die Tabellen, Constraints, Indizes, Trigger und aktiviert RLS.
-- `supabase/seeds/001_initial_lowhofer_data.sql` ueberfuehrt die bisherigen Mock-Spieler, Polls und Responses in initiale Daten.
+- `supabase/schema/current.sql` ist das kanonische Relaunch-Schema fuer frische Datenbanken.
+- `supabase/seeds/001_bootstrap_core_data.sql` ist ein optionaler Minimal-Seed fuer nicht-UI-pflegbare Stammdaten wie initiale Accounts, Rollen/Admins und Team-Settings.
+- `supabase/archive/legacy-cutover/` enthaelt nur noch historische Cutover-SQL aus der Schema-Umstellung und ist nicht Teil des aktiven Setups.
 - `src/data/supabaseMappers.ts` kapselt das Mapping zwischen DB-Slugs/`timestamptz` und dem bestehenden Frontendmodell.
 
-Vor produktiver Nutzung muessen Admin-Spieler, Spielerliste und `team_settings.team_password_hash` fachlich bestaetigt bzw. ersetzt werden.
+Vor produktiver Nutzung muessen Spielerliste, Admins und `team_settings.team_password_hash` fachlich bestaetigt bzw. ersetzt werden.
 
 ## Session und Team-Passwort
 
@@ -147,7 +148,7 @@ Hash fuer das Team-Passwort erzeugen:
 npm run hash:password -- "DEIN_TEAM_PASSWORT"
 ```
 
-Den ausgegebenen Hash in `team_settings.team_password_hash` eintragen oder vor dem Seed in `supabase/seeds/001_initial_lowhofer_data.sql` ersetzen.
+Den ausgegebenen Hash in `team_settings.team_password_hash` eintragen oder vor dem optionalen Bootstrap-Seed in `supabase/seeds/001_bootstrap_core_data.sql` ersetzen.
 
 ## API-Datenfluss
 
@@ -192,16 +193,6 @@ https://www.volleyball-freizeit.de/saison/1083
 
 Die konkreten XML-Abruf-URLs fuer Tabelle und Spielplan werden automatisch abgeleitet. Der Cache wird bei jeder Aenderung automatisch geleert.
 
-### Lokaler Daten-Import (Legacy)
-
-Der lokale Import-Befehl schreibt weiterhin Snapshot-Dateien fuer Offline-Entwicklung:
-
-```bash
-npm run import:league
-```
-
-Fuer den Produktivbetrieb ist dieser Schritt nicht mehr noetig – die App laedt alle Liga-Daten serverseitig.
-
 ## Struktur
 
 ```text
@@ -214,8 +205,9 @@ functions/             Cloudflare Pages Functions
     leagueSource.ts    URL-Ableitung aus Liga-Basis-URL
 
 supabase/
-  migrations/          SQL-Migrationen fuer Supabase
-  seeds/               Initiale Seed-Daten
+  schema/              Aktuelles kanonisches DB-Schema
+  seeds/               Optionaler Bootstrap-Seed fuer Stammdaten
+  archive/             Historische Cutover-SQL
 
 src/
   api/                 Frontend-API-Konfiguration

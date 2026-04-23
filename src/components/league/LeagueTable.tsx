@@ -1,6 +1,5 @@
-import { LOWHOFER_TEAM_NAME } from "../../data/leagueSnapshot";
 import { sortStandings } from "../../domain/leagueTable";
-import { LeagueStanding } from "../../domain/leagueTypes";
+import { LeagueStanding, LOWHOFER_TEAM_NAME } from "../../domain/leagueTypes";
 
 interface LeagueTableProps {
   standings: LeagueStanding[];

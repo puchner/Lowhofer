@@ -488,7 +488,7 @@ export interface TeamLeagueSettings extends TeamLeagueXmlUrls {
   league_base_url: string | null;
 }
 
-/** Nur die XML-Abruf-URLs – funktioniert auch ohne die league_base_url-Migration. */
+/** Nur die XML-Abruf-URLs. */
 export async function getTeamLeagueXmlUrls(env: CloudflareEnv): Promise<TeamLeagueXmlUrls | null> {
   const rows = await supabaseFetch<TeamLeagueXmlUrls[]>(
     env,
@@ -498,7 +498,7 @@ export async function getTeamLeagueXmlUrls(env: CloudflareEnv): Promise<TeamLeag
   return rows[0] ?? null;
 }
 
-/** Vollständige Liga-Einstellungen inkl. Basis-URL – erfordert die Migration aus Paket 5. */
+/** Vollstaendige Liga-Einstellungen inkl. Basis-URL. */
 export async function getTeamLeagueSettings(env: CloudflareEnv): Promise<TeamLeagueSettings | null> {
   const rows = await supabaseFetch<TeamLeagueSettings[]>(
     env,

@@ -1,5 +1,4 @@
-import { LOWHOFER_TEAM_NAME } from "../data/leagueSnapshot";
-import { LeagueStanding, MatchOutcomeScenario } from "./leagueTypes";
+import { LeagueStanding, LOWHOFER_TEAM_NAME, MatchOutcomeScenario } from "./leagueTypes";
 import { MatchDay } from "./types";
 
 const LOWHOFER_OUTCOMES = [

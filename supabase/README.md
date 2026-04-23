@@ -1,54 +1,42 @@
 # Supabase Setup
 
-Die Datenbank ist fuer den MVP als reine Server-Datenbank hinter den Cloudflare Pages Functions gedacht. Das Frontend soll keine Geschaeftsdaten direkt aus Supabase laden.
+Die Datenbank ist fuer den MVP als reine Server-Datenbank hinter den Cloudflare Pages Functions gedacht. Das Frontend laedt keine Geschaeftsdaten direkt aus Supabase.
 
-## Migrationen
+## Aktiver Stand
 
-Die Migrationen liegen in `supabase/migrations`.
+Das aktuelle Relaunch-Schema liegt als Vollsnapshot in `supabase/schema/current.sql`.
 
-Aktueller Stand:
+Der reguläre Neuaufsetz-Workflow ist:
 
-- `202604150001_create_core_schema.sql`
-  - Tabellen fuer Spieler, Positionen, Polls, Responses, Team-Settings und Liga-Cache
-  - CHECK-Constraints fuer fachliche Slugs
-  - `updated_at`-Trigger
-  - Indizes fuer die geplanten API-Zugriffe
-  - RLS aktiviert, ohne Browser-Policies
-- `202604160002_add_player_avatars.sql`
-  - Avatar-Metadaten fuer generierte Spieler-Avatare
-- `202604160003_create_player_update_state.sql`
-  - Gesehen-Status fuer App-Updates pro Spieler
-- `202604160004_add_training_member_role.sql`
-  - Rollenfeld fuer Login-Accounts
-  - gemeinsamer Nur-Lesen-Zugang `Lowhofer` mit Rolle `training_member`
+1. `supabase/schema/current.sql`
+2. optional `supabase/seeds/001_bootstrap_core_data.sql`
+3. entweder `supabase/local/prod_clone.sql` oder `supabase/local/generated_test_data.sql`
 
-## Seeds
+Der optionale Bootstrap-Seed enthaelt bewusst nur Daten, die heute nicht ueber die UI gepflegt werden:
 
-Die initialen Seed-Daten liegen in `supabase/seeds`.
+- initiale Spieler-/Login-Accounts
+- Admin-Flags
+- gemeinsamer Nur-Lesen-Zugang `Lowhofer`
+- Team-Settings inklusive Passwort-Hash-Platzhalter und Liga-URLs
 
-Aktueller Stand:
+Polls, Responses, Matches und Appointments gehoeren nicht mehr in einen Repo-Seed.
 
-- `001_initial_lowhofer_data.sql`
-  - Spieler und Positionen aus den bisherigen Mock-Daten
-  - bestehende Polls und Responses aus den Mock-Daten
-  - initiale Team-Settings inklusive Liga-URLs
-  - Pia und Volker als initiale Admin-Spieler
+## Archiv
 
-Vor produktiver Nutzung muessen fachlich bestaetigt werden:
+Die frueheren schrittweisen Migrationen und Cutover-Skripte liegen nur noch als Referenz unter:
 
-- Spielerliste
-- Team-Passwort-Hash (`team_settings.team_password_hash`)
-- Liga-URLs in `team_settings`
+```text
+supabase/archive/legacy-cutover/
+```
+
+Diese Dateien waren fuer die einmalige Ueberfuehrung vom alten Schema gedacht und gehoeren nicht mehr zum aktiven Setup einer frischen Datenbank.
 
 ## Ausfuehrung
 
 Wenn kein Supabase-CLI-Workflow verbunden ist, koennen die SQL-Dateien im Supabase SQL Editor in dieser Reihenfolge ausgefuehrt werden:
 
-1. `supabase/migrations/202604150001_create_core_schema.sql`
-2. `supabase/migrations/202604160002_add_player_avatars.sql`
-3. `supabase/migrations/202604160003_create_player_update_state.sql`
-4. `supabase/seeds/001_initial_lowhofer_data.sql`
-5. `supabase/migrations/202604160004_add_training_member_role.sql`
+1. `supabase/schema/current.sql`
+2. optional `supabase/seeds/001_bootstrap_core_data.sql`
 
 Die Cloudflare-Secrets fuer die spaetere API-Anbindung sind:
 
@@ -70,7 +58,7 @@ npm run local:dev
 
 `npm run local:setup` startet den lokalen Stack und setzt die Datenbank neu auf:
 
-- `supabase/relaunch_schema.sql`
+- `supabase/schema/current.sql`
 - standardmaessig synthetische lokale Testdaten aus `scripts/generateLocalTestData.mjs`
 - optional `supabase/local/prod_clone.sql`, falls ein Produktionsklon vorhanden ist
 - fuer lokale Functions wird `LOCAL_TEST_DATA=true` gesetzt, damit Liga-Tabelle und Fixtures aus dem lokalen Cache kommen
@@ -107,7 +95,7 @@ Danach erneut:
 npm run local:reset
 ```
 
-Repo-Seeds sind fuer diesen Workflow nicht noetig.
+Der Repo-Seed ist fuer diesen Workflow nicht noetig, weil lokale Testdaten oder ein Produktionsklon eingespielt werden.
 
 ## Passwort-Hash
 
@@ -119,7 +107,7 @@ npm run hash:password -- "DEIN_TEAM_PASSWORT"
 
 Das Script verwendet bewusst `100000` PBKDF2-Iterationen, weil Cloudflare Pages Functions in der verwendeten Runtime hoehere Werte ablehnt.
 
-Dann entweder vor dem Seed den Platzhalter `REPLACE_WITH_PBKDF2_HASH_FROM_PACKAGE_3` ersetzen oder nach dem Seed per SQL aktualisieren:
+Dann entweder vor dem optionalen Bootstrap-Seed den Platzhalter `REPLACE_WITH_PBKDF2_HASH` ersetzen oder nachtraeglich per SQL aktualisieren:
 
 ```sql
 update public.team_settings

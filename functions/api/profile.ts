@@ -88,10 +88,6 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
       })),
     );
   } catch (error) {
-    if (error instanceof Error && error.message.includes("avatar_")) {
-      return jsonResponse({ error: "profile_migration_required" }, { status: 409 });
-    }
-
     if (error instanceof Error && error.message.includes("players_active_display_name_unique_idx")) {
       return jsonResponse({ error: "display_name_already_exists" }, { status: 409 });
     }

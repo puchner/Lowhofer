@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MatchHostCard } from "../components/match/MatchHostCard";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";

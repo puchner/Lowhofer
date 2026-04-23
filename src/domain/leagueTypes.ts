@@ -1,3 +1,5 @@
+export const LOWHOFER_TEAM_NAME = "Die lowhofer";
+
 export interface LeagueStanding {
   team: string;
   points: number;
