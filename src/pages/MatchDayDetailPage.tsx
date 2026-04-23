@@ -1,9 +1,10 @@
-import { Pencil, Trash2 } from "lucide-react";
 import { useMemo } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { MatchHostCard } from "../components/match/MatchHostCard";
+import { PollAdminActions } from "../components/polls/PollAdminActions";
 import { PlayerPill } from "../components/players/PlayerPill";
 import { analyzeMatchDay } from "../domain/analyzeSquad";
+import { canFinalizeAppointment } from "../domain/pollHelpers";
 import { sortPlayersForCurrentUser } from "../domain/playerSorting";
 import { AvailabilityStatus, MatchAvailability, Player } from "../domain/types";
 import { StatusPill } from "../components/ui/StatusPill";
@@ -58,11 +59,12 @@ export function MatchDayDetailPage() {
         date={currentMatchDay.date}
         headerAction={
           canAdmin ? (
-            <AdminActions
-              canFinalize={currentMatchDay.type === "date-finding" && currentMatchDay.appointmentStatus === "planned"}
+            <PollAdminActions
+              canFinalize={canFinalizeAppointment(currentMatchDay)}
               matchDayId={currentMatchDay.id}
               onDelete={handleDelete}
               onFinalize={handleFinalize}
+              size="md"
             />
           ) : undefined
         }
@@ -144,48 +146,4 @@ function buildResponseGroups(rows: PlayerRow[]) {
     status,
     rows: rows.filter((row) => (row.availability?.status ?? AvailabilityStatus.Unknown) === status),
   }));
-}
-
-function AdminActions({
-  matchDayId,
-  onDelete,
-  onFinalize,
-  canFinalize,
-}: {
-  matchDayId: string;
-  onDelete: () => void;
-  onFinalize: () => void;
-  canFinalize: boolean;
-}) {
-  return (
-    <div className="flex shrink-0 items-center gap-1.5">
-      {canFinalize ? (
-        <button
-          className="btn h-8 min-h-0 rounded-lg bg-primary px-2 py-0 text-primary-content"
-          onClick={onFinalize}
-          title="Als finalen Termin festlegen"
-          type="button"
-        >
-          Festlegen
-        </button>
-      ) : null}
-      <Link
-        aria-label="Abstimmung bearbeiten"
-        className="btn h-8 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-base-content"
-        title="Bearbeiten"
-        to={`/polls/${matchDayId}/edit`}
-      >
-        <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-      </Link>
-      <button
-        aria-label="Abstimmung löschen"
-        className="btn h-8 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-error hover:bg-error hover:text-white"
-        onClick={onDelete}
-        title="Löschen"
-        type="button"
-      >
-        <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
-      </button>
-    </div>
-  );
 }

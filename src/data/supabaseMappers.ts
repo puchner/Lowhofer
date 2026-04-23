@@ -1,4 +1,5 @@
 import { AvailabilityPoll, AvailabilityStatus, Gender, MatchAvailability, Player, Position } from "../domain/types";
+export { berlinDateTimeToIso } from "../domain/berlinDateTime";
 
 export type DbGender = "male" | "female" | "diverse";
 export type DbPosition = "setter" | "outside" | "middle" | "opposite" | "libero";
@@ -93,8 +94,6 @@ export interface DbAvailabilityResponseRow {
 export interface DbPlayerWithPositions extends DbPlayerRow {
   player_positions?: DbPlayerPositionRow[];
 }
-
-const APP_TIME_ZONE = "Europe/Berlin";
 
 const dbPositionByDomainPosition: Record<Position, DbPosition> = {
   [Position.Setter]: "setter",
@@ -214,65 +213,4 @@ export function matchAvailabilityToDbUpsert(response: MatchAvailability): Pick<
     status: availabilityStatusToDbStatus(response.status),
     comment: response.comment ?? null,
   };
-}
-
-export function berlinDateTimeToIso(date: string, time = "00:00"): string {
-  const [year, month, day] = date.split("-").map(Number);
-  const [hour, minute] = time.split(":").map(Number);
-  const localAsUtcMs = Date.UTC(year, month - 1, day, hour, minute, 0);
-  let utcMs = localAsUtcMs;
-
-  for (let index = 0; index < 2; index += 1) {
-    utcMs = localAsUtcMs - getTimeZoneOffsetMs(new Date(utcMs), APP_TIME_ZONE);
-  }
-
-  return new Date(utcMs).toISOString();
-}
-
-function getTimeZoneOffsetMs(date: Date, timeZone: string): number {
-  const parts = getZonedParts(date, timeZone);
-  const zonedAsUtcMs = Date.UTC(
-    Number(parts.year),
-    Number(parts.month) - 1,
-    Number(parts.day),
-    Number(parts.hour),
-    Number(parts.minute),
-    Number(parts.second),
-  );
-
-  return zonedAsUtcMs - date.getTime();
-}
-
-function getZonedParts(date: Date, timeZone: string): Record<"year" | "month" | "day" | "hour" | "minute" | "second", string> {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  });
-
-  const parts = formatter.formatToParts(date);
-
-  return {
-    year: getPart(parts, "year"),
-    month: getPart(parts, "month"),
-    day: getPart(parts, "day"),
-    hour: getPart(parts, "hour"),
-    minute: getPart(parts, "minute"),
-    second: getPart(parts, "second"),
-  };
-}
-
-function getPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const value = parts.find((part) => part.type === type)?.value;
-
-  if (!value) {
-    throw new Error(`Could not read ${type} from ${APP_TIME_ZONE} date.`);
-  }
-
-  return value;
 }

@@ -1,14 +1,16 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { MatchHostCard } from "../components/match/MatchHostCard";
-import { LeagueFixture } from "../domain/types";
+import { SuggestionEditor } from "../components/polls/SuggestionEditor";
+import {
+  buildCreatePollInputForFixture,
+  createSuggestionDraftFromFixture,
+  getOpenLeagueFixtures,
+  normalizeSuggestionDrafts,
+  SuggestionDraft,
+} from "../domain/pollHelpers";
 import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
-
-type SuggestionDraft = {
-  date: string;
-  time: string;
-};
 
 export function NewPollPage() {
   const navigate = useNavigate();
@@ -16,21 +18,7 @@ export function NewPollPage() {
   const { selectedPlayerIsAdmin } = useSession();
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionDraft[]>([]);
-  const openLeagueFixtures = useMemo(
-    () => {
-      // Ein Ligaspiel gilt als "offen" nur, wenn noch keine offene Abstimmung existiert.
-      // Das deckt sowohl bereits scheduled Termine als auch laufende Mehrfachvorschläge ab.
-      const blockedFixtureIds = new Set(
-        matchDays
-          .filter((matchDay) => matchDay.status === "open")
-          .map((matchDay) => matchDay.leagueGameNr ?? matchDay.sourceFixtureId)
-          .filter(Boolean),
-      );
-
-      return leagueFixtures.filter((fixture) => !blockedFixtureIds.has(fixture.id));
-    },
-    [leagueFixtures, matchDays],
-  );
+  const openLeagueFixtures = useMemo(() => getOpenLeagueFixtures(leagueFixtures, matchDays), [leagueFixtures, matchDays]);
   const selectedFixture = openLeagueFixtures.find((fixture) => fixture.id === selectedFixtureId);
 
   useEffect(() => {
@@ -50,7 +38,7 @@ export function NewPollPage() {
       return;
     }
 
-    setSuggestions([createInitialSuggestion(selectedFixture)]);
+    setSuggestions([createSuggestionDraftFromFixture(selectedFixture)]);
   }, [selectedFixture]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -60,27 +48,13 @@ export function NewPollPage() {
       return;
     }
 
-    const normalizedSuggestions = suggestions
-      .map((suggestion) => ({
-        date: suggestion.date.trim(),
-        time: suggestion.time.trim() || undefined,
-      }))
-      .filter((suggestion) => suggestion.date);
+    const normalizedSuggestions = normalizeSuggestionDrafts(suggestions);
 
     if (normalizedSuggestions.length === 0) {
       return;
     }
 
-    await createPoll({
-      title: selectedFixture.opponent,
-      type: normalizedSuggestions.length === 1 ? "match" : "date-finding",
-      date: normalizedSuggestions.length === 1 ? normalizedSuggestions[0].date : undefined,
-      time: normalizedSuggestions.length === 1 ? normalizedSuggestions[0].time : undefined,
-      opponent: selectedFixture.opponent,
-      homeAway: selectedFixture.homeAway,
-      sourceFixtureId: selectedFixture.id,
-      suggestions: normalizedSuggestions.length > 1 ? normalizedSuggestions : undefined,
-    });
+    await createPoll(buildCreatePollInputForFixture(selectedFixture, normalizedSuggestions));
     navigate("/");
   }
 
@@ -143,57 +117,12 @@ export function NewPollPage() {
                   time={selectedFixture.time}
                 />
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-xs font-semibold uppercase text-base-content/60">Terminvorschläge</p>
-                  </div>
-                  {suggestions.map((suggestion, index) => (
-                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]" key={`${index}-${suggestion.date}-${suggestion.time}`}>
-                      <input
-                        className="input input-bordered min-h-11 w-full rounded-lg"
-                        onChange={(event) =>
-                          setSuggestions((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, date: event.target.value } : item,
-                            ),
-                          )
-                        }
-                        required
-                        type="date"
-                        value={suggestion.date}
-                      />
-                      <input
-                        className="input input-bordered min-h-11 w-full rounded-lg"
-                        onChange={(event) =>
-                          setSuggestions((current) =>
-                            current.map((item, itemIndex) =>
-                              itemIndex === index ? { ...item, time: event.target.value } : item,
-                            ),
-                          )
-                        }
-                        type="time"
-                        value={suggestion.time}
-                      />
-                      <button
-                        className="btn min-h-11 rounded-lg"
-                        disabled={suggestions.length === 1}
-                        onClick={() =>
-                          setSuggestions((current) => current.filter((_, itemIndex) => itemIndex !== index))
-                        }
-                        type="button"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    className="btn btn-outline min-h-11 rounded-lg"
-                    onClick={() => setSuggestions((current) => [...current, createEmptySuggestion()])}
-                    type="button"
-                  >
-                    + Vorschlag
-                  </button>
-                </div>
+                <SuggestionEditor
+                  heading="Terminvorschläge"
+                  onChange={setSuggestions}
+                  requireDate
+                  suggestions={suggestions}
+                />
 
                 <button className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900" type="submit">
                   Abstimmung anlegen
@@ -205,18 +134,4 @@ export function NewPollPage() {
       )}
     </section>
   );
-}
-
-function createInitialSuggestion(fixture: LeagueFixture): SuggestionDraft {
-  return {
-    date: fixture.date ?? "",
-    time: fixture.time ?? "",
-  };
-}
-
-function createEmptySuggestion(): SuggestionDraft {
-  return {
-    date: "",
-    time: "",
-  };
 }

@@ -1,16 +1,18 @@
-import { CalendarSync, Pencil, Plus, Trash2 } from "lucide-react";
+import { CalendarSync, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchCalendarFeedUrl, fetchLeagueTable } from "../api/plannerApi";
 import { CalendarSubscriptionDialog } from "../components/calendar/CalendarSubscriptionDialog";
 import { HomeAwayIcon } from "../components/match/MatchHostCard";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
+import { PollAdminActions } from "../components/polls/PollAdminActions";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
 import { TrafficLight } from "../components/ui/TrafficLight";
 import { analyzeMatchDay } from "../domain/analyzeSquad";
 import { formatMatchDateTime } from "../domain/dateAndTimeUtils";
 import { groupMatchDays } from "../domain/matchDayGroups";
 import { getAllUpcomingMatchDays } from "../domain/matchDayFilters";
+import { canFinalizeAppointment } from "../domain/pollHelpers";
 import { isTrainingMemberRole } from "../domain/playerRoles";
 import { LeagueStanding } from "../domain/leagueTypes";
 import { AvailabilityStatus, MatchDay } from "../domain/types";
@@ -128,8 +130,8 @@ export function DashboardPage() {
               ) : undefined;
             const headerAction = canAdmin ? (
               <PollAdminActions
-                canFinalize={false}
-                matchDay={matchDay}
+                canFinalize={canFinalizeAppointment(matchDay)}
+                matchDayId={matchDay.id}
                 onDelete={() => void deletePoll(matchDay.id)}
                 onFinalize={() => void updatePoll({ pollId: matchDay.id, finalizePlannedAppointment: true })}
               />
@@ -159,25 +161,12 @@ export function DashboardPage() {
                   </div>
                 </div>
                 {canAdmin ? (
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <Link
-                      aria-label="Abstimmung bearbeiten"
-                      className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
-                      title="Bearbeiten"
-                      to={`/polls/${group.matchDays[0].id}/edit`}
-                    >
-                      <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                    </Link>
-                    <button
-                      aria-label="Abstimmung löschen"
-                      className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
-                      onClick={() => void handleDeleteGroup(group.matchDays)}
-                      title="Löschen"
-                      type="button"
-                    >
-                      <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                    </button>
-                  </div>
+                  <PollAdminActions
+                    canFinalize={false}
+                    matchDayId={group.matchDays[0].id}
+                    onDelete={() => void handleDeleteGroup(group.matchDays)}
+                    onFinalize={() => void updatePoll({ pollId: group.matchDays[0].id, finalizePlannedAppointment: true })}
+                  />
                 ) : null}
               </div>
 
@@ -221,7 +210,7 @@ export function DashboardPage() {
                                 value={availability}
                               />
                             ) : null}
-                            {canAdmin && matchDay.type === "date-finding" && matchDay.appointmentStatus === "planned" ? (
+                            {canAdmin && canFinalizeAppointment(matchDay) ? (
                               <button
                                 className="btn h-8 min-h-0 w-full rounded-lg bg-primary px-3 py-0 text-sm text-primary-content"
                                 onClick={() => void updatePoll({ pollId: matchDay.id, finalizePlannedAppointment: true })}
@@ -272,48 +261,4 @@ function toWebcalUrl(feedUrl: string): string | null {
   }
 
   return `webcal://${feedLocation.host}${feedLocation.pathname}${feedLocation.search}`;
-}
-
-function PollAdminActions({
-  matchDay,
-  canFinalize,
-  onDelete,
-  onFinalize,
-}: {
-  matchDay: MatchDay;
-  canFinalize: boolean;
-  onDelete: () => void;
-  onFinalize: () => void;
-}) {
-  return (
-    <>
-      {canFinalize ? (
-        <button
-          className="btn h-7 min-h-0 rounded-lg bg-primary px-2 py-0 text-xs leading-none text-primary-content"
-          onClick={onFinalize}
-          title="Als finalen Termin festlegen"
-          type="button"
-        >
-          Festlegen
-        </button>
-      ) : null}
-      <Link
-        aria-label="Abstimmung bearbeiten"
-        className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
-        title="Bearbeiten"
-        to={`/polls/${matchDay.id}/edit`}
-      >
-        <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-      </Link>
-      <button
-        aria-label="Abstimmung löschen"
-        className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
-        onClick={onDelete}
-        title="Löschen"
-        type="button"
-      >
-        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-      </button>
-    </>
-  );
 }

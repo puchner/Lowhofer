@@ -3,7 +3,7 @@ import { CloudflareEnv } from "../_shared/env";
 import { jsonResponse, readJsonBody } from "../_shared/http";
 import { getLeagueContext } from "../_shared/leagueContext";
 import { buildPollInsert, mapPollWithAppointment, PollRequestBody } from "../_shared/pollMapping";
-import { berlinDateTimeToIso } from "../../src/data/supabaseMappers";
+import { berlinDateTimeToIso, getBerlinTime } from "../../src/domain/berlinDateTime";
 import {
   createAppointment,
   createCustomMatch,
@@ -242,16 +242,7 @@ function extractPollTime(body: PollRequestBody, startsAt: string): string | unde
     return body.time;
   }
 
-  const date = new Date(startsAt);
-  const formatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Berlin",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  });
-  const time = formatter.format(date);
-
-  return time === "00:00" ? undefined : time;
+  return getBerlinTime(startsAt);
 }
 
 function requireText(value: unknown, fieldName: string): string {

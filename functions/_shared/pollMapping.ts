@@ -1,5 +1,5 @@
+import { berlinDateTimeToIso, splitIsoInBerlin } from "../../src/domain/berlinDateTime";
 import {
-  berlinDateTimeToIso,
   DbAvailabilityPollRow,
   DbAvailabilityPollWithAppointmentRow,
   DbAvailabilityResponseRow,
@@ -249,46 +249,4 @@ function normalizeResponseStatus(value: ResponseRequestBody["status"]): "availab
   }
 
   throw new Error("response_status_invalid");
-}
-
-function splitIsoInBerlin(isoValue: string): { date: string; time?: string } {
-  const parts = getZonedParts(new Date(isoValue));
-  const date = `${parts.year}-${parts.month}-${parts.day}`;
-  const time = `${parts.hour}:${parts.minute}`;
-
-  return {
-    date,
-    time: time === "00:00" ? undefined : time,
-  };
-}
-
-function getZonedParts(date: Date): Record<"year" | "month" | "day" | "hour" | "minute", string> {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Berlin",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  });
-  const parts = formatter.formatToParts(date);
-
-  return {
-    year: getPart(parts, "year"),
-    month: getPart(parts, "month"),
-    day: getPart(parts, "day"),
-    hour: getPart(parts, "hour"),
-    minute: getPart(parts, "minute"),
-  };
-}
-
-function getPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  const value = parts.find((part) => part.type === type)?.value;
-
-  if (!value) {
-    throw new Error(`date_${type}_missing`);
-  }
-
-  return value;
 }
