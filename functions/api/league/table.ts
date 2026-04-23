@@ -1,5 +1,5 @@
 import { requireSelectedPlayer } from "../../_shared/auth";
-import { CloudflareEnv } from "../../_shared/env";
+import { CloudflareEnv, isLocalTestDataEnabled } from "../../_shared/env";
 import { jsonResponse } from "../../_shared/http";
 import { parseLeagueTable } from "../../_shared/leagueParser";
 import { getLeagueCache, getTeamLeagueXmlUrls, setLeagueCache } from "../../_shared/supabase";
@@ -15,8 +15,9 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
 
   const cache = await getLeagueCache(env, "table");
   const now = new Date();
+  const useLocalTestData = isLocalTestDataEnabled(env);
 
-  if (cache && new Date(cache.expires_at) > now) {
+  if (cache && (useLocalTestData || new Date(cache.expires_at) > now)) {
     return jsonResponse({
       ...(cache.payload_json as object),
       fetchedAt: cache.fetched_at,

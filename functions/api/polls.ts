@@ -181,19 +181,27 @@ async function findOrCreateAppointment(
   });
 }
 
-function pollTypeToAppointmentStatus(pollType: PollInsert["poll_type"]): DbMatchAppointmentStatus {
+export function pollTypeToAppointmentStatus(pollType: PollInsert["poll_type"]): DbMatchAppointmentStatus {
   return pollType === "date-finding" ? "planned" : "scheduled";
 }
 
-function buildPollDrafts(body: PollRequestBody, createdByPlayerId: string): PollDraft[] {
-  if (body.type === "date-finding") {
-    const suggestions = body.suggestions ?? [];
+export function buildPollDrafts(body: PollRequestBody, createdByPlayerId: string): PollDraft[] {
+  const suggestionInputs = body.suggestions ?? [];
+
+  if (suggestionInputs.length > 0) {
+    const requestedPollType =
+      suggestionInputs.length > 1
+        ? "date-finding"
+        : body.type === "date-finding"
+          ? "date-finding"
+          : "match";
     const seenKeys = new Set<string>();
 
-    return suggestions.map((suggestion) => {
+    return suggestionInputs.map((suggestion) => {
       const input = buildPollDraft(
         {
           ...body,
+          type: requestedPollType,
           date: suggestion.date,
           location: suggestion.location ?? body.location,
           time: suggestion.time,
@@ -212,7 +220,7 @@ function buildPollDrafts(body: PollRequestBody, createdByPlayerId: string): Poll
     });
   }
 
-  return [buildPollDraft(body, createdByPlayerId)];
+  return [buildPollDraft({ ...body, type: body.type ?? "match" }, createdByPlayerId)];
 }
 
 function buildPollDraft(body: PollRequestBody, createdByPlayerId: string): PollDraft {

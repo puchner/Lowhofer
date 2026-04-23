@@ -3,6 +3,7 @@ export interface CloudflareEnv {
   SUPABASE_SERVICE_ROLE_KEY?: string;
   SESSION_SECRET?: string;
   CALENDAR_FEED_TOKEN?: string;
+  LOCAL_TEST_DATA?: string;
 }
 
 const requiredServerSecrets = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SESSION_SECRET"] as const;
@@ -24,4 +25,10 @@ export function getServerConfigStatus(env: CloudflareEnv): Record<RequiredServer
     RequiredServerSecret,
     boolean
   >;
+}
+
+export function isLocalTestDataEnabled(env: CloudflareEnv): boolean {
+  const value = env.LOCAL_TEST_DATA?.trim().toLowerCase();
+
+  return value === "1" || value === "true" || value === "yes" || value === "on";
 }

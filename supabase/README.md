@@ -57,6 +57,58 @@ Die Cloudflare-Secrets fuer die spaetere API-Anbindung sind:
 
 Der Service-Role-Key darf nur serverseitig in Cloudflare Pages Functions verwendet werden.
 
+## Lokale Datenbank
+
+Fuer lokale Entwicklung ist jetzt ein Supabase-CLI-Workflow im Repo vorgesehen.
+
+Wichtige Kommandos aus dem Projekt-Root:
+
+```bash
+npm run local:setup
+npm run local:dev
+```
+
+`npm run local:setup` startet den lokalen Stack und setzt die Datenbank neu auf:
+
+- `supabase/relaunch_schema.sql`
+- standardmaessig synthetische lokale Testdaten aus `scripts/generateLocalTestData.mjs`
+- optional `supabase/local/prod_clone.sql`, falls ein Produktionsklon vorhanden ist
+- fuer lokale Functions wird `LOCAL_TEST_DATA=true` gesetzt, damit Liga-Tabelle und Fixtures aus dem lokalen Cache kommen
+
+`npm run local:dev` startet die Oberflaeche mit Vite-HMR und laesst `/api/*` gegen die lokale Cloudflare-Functions-Instanz laufen.
+
+### Synthetische Testdaten
+
+Ohne Produktionsdump werden automatisch lokale Beispieldaten erzeugt:
+
+- 12 Spieler mit gemischten Positionen und Avataren
+- 2 Admins
+- offene und archivierte Polls
+- reale Liga-Teams und Lowhofer-Gegner aus den offiziellen XML-Abrufen
+- Ligatermine relativ zu heute verschoben, damit lokal eine "Saisonmitte" entsteht
+
+Lokales Team-Passwort:
+
+```text
+lowhofer-local
+```
+
+### Clone-Dump-Format
+
+Fuer produktionsnahe lokale Tests sollte der Export als `data-only` SQL-Dump fuer `public` erfolgen, abgelegt unter:
+
+```text
+supabase/local/prod_clone.sql
+```
+
+Danach erneut:
+
+```bash
+npm run local:reset
+```
+
+Repo-Seeds sind fuer diesen Workflow nicht noetig.
+
 ## Passwort-Hash
 
 Der Passwort-Hash kann nach Paket 3 lokal erzeugt werden:

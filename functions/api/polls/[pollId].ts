@@ -108,13 +108,20 @@ export const onRequestPatch: PagesFunction<CloudflareEnv, "pollId"> = async ({ r
       }
     }
 
-    const poll = await updatePoll(env, pollId, patch);
+    const updatedPollId = pollId;
 
-    if (!poll) {
-      return jsonResponse({ error: "poll_not_found" }, { status: 404 });
+    if (Object.keys(patch).length > 0) {
+      const poll = await updatePoll(env, pollId, patch);
+
+      if (!poll) {
+        return jsonResponse({ error: "poll_not_found" }, { status: 404 });
+      }
     }
 
-    const [updatedPoll, responses] = await Promise.all([getPollWithAppointment(env, poll.id), listResponsesForPoll(env, poll.id)]);
+    const [updatedPoll, responses] = await Promise.all([
+      getPollWithAppointment(env, updatedPollId),
+      listResponsesForPoll(env, updatedPollId),
+    ]);
 
     if (!updatedPoll) {
       return jsonResponse({ error: "poll_not_found_after_update" }, { status: 500 });
@@ -135,7 +142,24 @@ export const onRequestDelete: PagesFunction<CloudflareEnv, "pollId"> = async ({ 
     return authenticated;
   }
 
-  await deletePoll(env, getPollId(params.pollId));
+  const pollId = getPollId(params.pollId);
+  const existingPoll = await getPollWithAppointment(env, pollId);
+
+  if (!existingPoll) {
+    return jsonResponse({ error: "poll_not_found" }, { status: 404 });
+  }
+
+  await deletePoll(env, pollId);
+
+  const appointmentId = existingPoll.match_appointment_id;
+
+  if (appointmentId) {
+    const remainingPolls = await listPollsForAppointment(env, appointmentId);
+
+    if (remainingPolls.length === 0) {
+      await deleteAppointment(env, appointmentId);
+    }
+  }
 
   return jsonResponse({ ok: true });
 };

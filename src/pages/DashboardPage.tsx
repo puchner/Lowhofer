@@ -3,10 +3,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchCalendarFeedUrl, fetchLeagueTable } from "../api/plannerApi";
 import { CalendarSubscriptionDialog } from "../components/calendar/CalendarSubscriptionDialog";
+import { HomeAwayIcon } from "../components/match/MatchHostCard";
 import { MatchDayCard } from "../components/matchDays/MatchDayCard";
 import { AvailabilityButtons } from "../components/ui/AvailabilityButtons";
+import { TrafficLight } from "../components/ui/TrafficLight";
+import { analyzeMatchDay } from "../domain/analyzeSquad";
+import { formatMatchDateTime } from "../domain/dateAndTimeUtils";
 import { groupMatchDays } from "../domain/matchDayGroups";
-import { getAllUpcomingMatchDays, getUpcomingMatchDays } from "../domain/matchDayFilters";
+import { getAllUpcomingMatchDays } from "../domain/matchDayFilters";
 import { isTrainingMemberRole } from "../domain/playerRoles";
 import { LeagueStanding } from "../domain/leagueTypes";
 import { AvailabilityStatus, MatchDay } from "../domain/types";
@@ -14,9 +18,8 @@ import { useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function DashboardPage() {
-  const { deletePoll, error, isLoading, matchDays, players, updateAvailability, updatePoll } = usePlanner();
+  const { deletePoll, error, isLoading, matchDays, players, refresh, updateAvailability, updatePoll } = usePlanner();
   const session = useSession();
-  const [showAllMatchDays, setShowAllMatchDays] = useState(false);
   const [isOpeningCalendarFeed, setIsOpeningCalendarFeed] = useState(false);
   const [calendarFeedUrl, setCalendarFeedUrl] = useState<string | null>(null);
   const [calendarWebcalUrl, setCalendarWebcalUrl] = useState<string | null>(null);
@@ -26,9 +29,7 @@ export function DashboardPage() {
   const canAdmin = session.selectedPlayerIsAdmin;
   const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
   const allUpcomingMatchDays = getAllUpcomingMatchDays(matchDays);
-  const upcomingMatchDays = showAllMatchDays ? allUpcomingMatchDays : getUpcomingMatchDays(matchDays);
-  const groupedMatchDays = groupMatchDays(upcomingMatchDays);
-  const hasMoreMatchDays = allUpcomingMatchDays.length > upcomingMatchDays.length;
+  const groupedMatchDays = groupMatchDays(allUpcomingMatchDays);
 
   useEffect(() => {
     fetchLeagueTable()
@@ -126,25 +127,12 @@ export function DashboardPage() {
                 />
               ) : undefined;
             const headerAction = canAdmin ? (
-              <>
-                <Link
-                  aria-label="Abstimmung bearbeiten"
-                  className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
-                  title="Bearbeiten"
-                  to={`/polls/${matchDay.id}/edit`}
-                >
-                  <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                </Link>
-                <button
-                  aria-label="Abstimmung löschen"
-                  className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
-                  onClick={() => void deletePoll(matchDay.id)}
-                  title="Löschen"
-                  type="button"
-                >
-                  <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                </button>
-              </>
+              <PollAdminActions
+                canFinalize={false}
+                matchDay={matchDay}
+                onDelete={() => void deletePoll(matchDay.id)}
+                onFinalize={() => void updatePoll({ pollId: matchDay.id, finalizePlannedAppointment: true })}
+              />
             ) : undefined;
 
             return (
@@ -162,79 +150,91 @@ export function DashboardPage() {
 
           return (
             <section className="rounded-lg border border-primary/15 bg-base-100 p-3 shadow-sm" key={group.matchId}>
-              <div className="flex items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-base font-bold text-petrol-900">{group.label}</h3>
-                  <p className="text-sm text-base-content/70">{group.matchDays.length} Terminvorschläge</p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-start gap-2">
+                  <HomeAwayIcon homeAway={group.matchDays[0].homeAway} />
+                  <div className="min-w-0">
+                    <h3 className="truncate text-base font-bold text-petrol-900 sm:text-lg">{group.label}</h3>
+                    <p className="mt-1 text-sm text-base-content/70">{group.matchDays.length} Terminvorschläge</p>
+                  </div>
                 </div>
+                {canAdmin ? (
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <Link
+                      aria-label="Abstimmung bearbeiten"
+                      className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
+                      title="Bearbeiten"
+                      to={`/polls/${group.matchDays[0].id}/edit`}
+                    >
+                      <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                    </Link>
+                    <button
+                      aria-label="Abstimmung löschen"
+                      className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
+                      onClick={() => void handleDeleteGroup(group.matchDays)}
+                      title="Löschen"
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                    </button>
+                  </div>
+                ) : null}
               </div>
-              <div className="mt-3 space-y-2">
+
+              <div className="mt-3 grid gap-3">
                 {group.matchDays.map((matchDay) => {
                   const activeAvailability =
                     activePlayerId === null
                       ? undefined
                       : matchDay.availability.find((entry) => entry.playerId === activePlayerId);
                   const availability = activeAvailability?.status ?? AvailabilityStatus.Unknown;
+                  const analysis = analyzeMatchDay(matchDay, players);
 
                   return (
-                    <div className="rounded-lg border border-base-300 p-3" key={matchDay.id}>
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <Link className="font-semibold text-petrol-900 hover:underline" to={`/match-days/${matchDay.id}`}>
-                            {formatCardDate(matchDay)}
+                    <article className="rounded-lg border border-base-300 p-3" key={matchDay.id}>
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0">
+                          <Link
+                            className="font-semibold text-petrol-900 underline-offset-4 hover:underline"
+                            to={`/match-days/${matchDay.id}`}
+                          >
+                            {formatMatchDateTime(matchDay.date, matchDay.time)}
                           </Link>
-                          {matchDay.location ? (
-                            <p className="text-sm text-base-content/70">{matchDay.location}</p>
-                          ) : null}
+                          {matchDay.location ? <p className="mt-1 text-sm text-base-content/70">{matchDay.location}</p> : null}
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="badge badge-primary badge-sm">{analysis.availableCount} Zusagen</span>
+                            <TrafficLight compact status={analysis.status} />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {activePlayerId && canWriteAvailability ? (
-                            <AvailabilityButtons
-                              comment={activeAvailability?.comment}
-                              onChange={(status, comment) =>
-                                updateAvailability({
-                                  comment,
-                                  matchDayId: matchDay.id,
-                                  status,
-                                })
-                              }
-                              value={availability}
-                            />
-                          ) : null}
-                          {canAdmin ? (
-                            <>
-                              {matchDay.type === "date-finding" && matchDay.appointmentStatus === "planned" ? (
-                                <button
-                                  className="btn h-7 min-h-0 rounded-lg bg-primary px-2 py-0 text-xs leading-none text-primary-content"
-                                  onClick={() => void updatePoll({ pollId: matchDay.id, finalizePlannedAppointment: true })}
-                                  title="Als finalen Termin festlegen"
-                                  type="button"
-                                >
-                                  Festlegen
-                                </button>
-                              ) : null}
-                              <Link
-                                aria-label="Abstimmung bearbeiten"
-                                className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
-                                title="Bearbeiten"
-                                to={`/polls/${matchDay.id}/edit`}
-                              >
-                                <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
-                              </Link>
+                        <div className="w-full lg:max-w-72 lg:shrink-0">
+                          <div className="space-y-2">
+                            {activePlayerId && canWriteAvailability ? (
+                              <AvailabilityButtons
+                                comment={activeAvailability?.comment}
+                                onChange={(status, comment) =>
+                                  updateAvailability({
+                                    comment,
+                                    matchDayId: matchDay.id,
+                                    status,
+                                  })
+                                }
+                                value={availability}
+                              />
+                            ) : null}
+                            {canAdmin && matchDay.type === "date-finding" && matchDay.appointmentStatus === "planned" ? (
                               <button
-                                aria-label="Abstimmung löschen"
-                                className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
-                                onClick={() => void deletePoll(matchDay.id)}
-                                title="Löschen"
+                                className="btn h-8 min-h-0 w-full rounded-lg bg-primary px-3 py-0 text-sm text-primary-content"
+                                onClick={() => void updatePoll({ pollId: matchDay.id, finalizePlannedAppointment: true })}
+                                title="Als finalen Termin festlegen"
                                 type="button"
                               >
-                                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+                                Festlegen
                               </button>
-                            </>
-                          ) : null}
+                            ) : null}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
@@ -243,16 +243,16 @@ export function DashboardPage() {
         })}
       </div>
 
-      {hasMoreMatchDays ? (
-        <button
-          className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900 sm:w-auto"
-          onClick={() => setShowAllMatchDays(true)}
-        >
-          Weitere laden
-        </button>
-      ) : null}
     </section>
   );
+
+  async function handleDeleteGroup(groupMatchDays: MatchDay[]) {
+    for (const matchDay of groupMatchDays) {
+      await deletePoll(matchDay.id);
+    }
+
+    await refresh();
+  }
 }
 
 function shouldOpenCalendarDirectly(): boolean {
@@ -274,11 +274,46 @@ function toWebcalUrl(feedUrl: string): string | null {
   return `webcal://${feedLocation.host}${feedLocation.pathname}${feedLocation.search}`;
 }
 
-function formatCardDate(matchDay: MatchDay): string {
-  return `${new Intl.DateTimeFormat("de-DE", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(new Date(matchDay.date))}${matchDay.time ? ` um ${matchDay.time}` : ""}`;
+function PollAdminActions({
+  matchDay,
+  canFinalize,
+  onDelete,
+  onFinalize,
+}: {
+  matchDay: MatchDay;
+  canFinalize: boolean;
+  onDelete: () => void;
+  onFinalize: () => void;
+}) {
+  return (
+    <>
+      {canFinalize ? (
+        <button
+          className="btn h-7 min-h-0 rounded-lg bg-primary px-2 py-0 text-xs leading-none text-primary-content"
+          onClick={onFinalize}
+          title="Als finalen Termin festlegen"
+          type="button"
+        >
+          Festlegen
+        </button>
+      ) : null}
+      <Link
+        aria-label="Abstimmung bearbeiten"
+        className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-base-content"
+        title="Bearbeiten"
+        to={`/polls/${matchDay.id}/edit`}
+      >
+        <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+      </Link>
+      <button
+        aria-label="Abstimmung löschen"
+        className="btn h-7 min-h-0 rounded-lg bg-base-200 px-2 py-0 text-xs leading-none text-error hover:bg-error hover:text-white"
+        onClick={onDelete}
+        title="Löschen"
+        type="button"
+      >
+        <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
+    </>
+  );
 }

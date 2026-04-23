@@ -9,6 +9,85 @@ npm install
 npm run dev
 ```
 
+## Lokale Testumgebung mit lokaler DB
+
+Fuer eine produktionsnahe Testumgebung gibt es jetzt einen lokalen Supabase-Workflow mit Cloudflare Functions und Vite-Hot-Reload.
+
+Voraussetzungen:
+
+- Docker / Docker Compose
+- `npm install`
+
+Einmaliges lokales Aufsetzen:
+
+```bash
+npm run local:setup
+```
+
+Das macht folgendes:
+
+- startet den lokalen Supabase-Stack
+- erzeugt `.dev.vars` mit den lokalen Supabase-Zugangsdaten fuer Wrangler
+- setzt die lokale DB neu auf
+- spielt `supabase/relaunch_schema.sql` ein
+- importiert entweder `supabase/local/prod_clone.sql` oder generiert lokale Testdaten
+- aktiviert lokal `LOCAL_TEST_DATA=true`, damit Tabellen- und Fixture-Ansichten die generierten Testdaten stabil verwenden
+
+Normaler Entwicklungsstart mit Hot Reload:
+
+```bash
+npm run local:dev
+```
+
+Dann laufen:
+
+- Vite-Frontend mit HMR auf `http://127.0.0.1:5173`
+- Cloudflare Pages Functions lokal auf `http://127.0.0.1:8789`
+- Supabase Studio auf `http://127.0.0.1:54323`
+
+Das Vite-Dev-Setup proxyt `/api/*` automatisch an die lokale Functions-Instanz. Damit spricht die UI lokal gegen die lokale DB, nicht gegen Produktion.
+
+Nuetzliche Kommandos:
+
+- `npm run local:services:start` startet Supabase und erzeugt `.dev.vars`, ohne die DB zurueckzusetzen
+- `npm run local:reset` setzt die lokale DB komplett neu auf
+- `npm run local:db:stop` stoppt den lokalen Supabase-Stack
+- `npm run local:testdata` erzeugt nur die synthetische SQL-Datei fuer lokale Testdaten neu
+- `npm run pages:local` startet nur die lokale Functions-Instanz gegen die lokale DB, ohne Vite
+
+### Standard: synthetische Testdaten
+
+Ohne Produktionsdump erzeugt `npm run local:setup` automatisch eine lokale Testdatenbasis:
+
+- 12 Spieler mit gemischten Positionen, Avataren und 2 Admins
+- bestehende und offene Abstimmungen mit gemischten Rueckmeldungen
+- offizielle Liga-Teams aus den XML-Exporten
+- Ligaspiele in eine lokale "Saisonmitte" verschoben, damit noch mehrere offene Spiele zum Testen da sind
+
+Das lokale Team-Passwort ist dabei:
+
+```text
+lowhofer-local
+```
+
+### Optional: Produktionsdaten lokal klonen
+
+Lege alternativ einen SQL-Dump unter `supabase/local/prod_clone.sql` ab und fuehre danach erneut aus:
+
+```bash
+npm run local:reset
+```
+
+Empfohlen ist ein `data-only` Dump aus dem `public`-Schema. Die lokale Installation spielt zuerst `supabase/relaunch_schema.sql` ein und importiert danach den Dump. Einen Repo-Seed braucht ihr dafuer nicht.
+
+Beispiel mit Supabase-CLI gegen eine entfernte DB:
+
+```bash
+npx supabase db dump --data-only --schema public --db-url "postgresql://..." -f supabase/local/prod_clone.sql
+```
+
+Wenn sich das Schema aendert oder ihr neue Testdaten wollt, reicht erneut `npm run local:reset`. Im normalen Alltag ist kein erneutes Schema-Setzen und kein Reimport bei jedem Start noetig.
+
 ## Cloudflare Pages
 
 Das Projekt ist auf Cloudflare Pages mit Pages Functions vorbereitet.

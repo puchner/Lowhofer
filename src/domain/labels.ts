@@ -4,7 +4,7 @@ export const positionLabels = Object.values(Position);
 
 export const genderLabel: Record<Gender, string> = {
   [Gender.Female]: "Madl",
-  [Gender.Male]: "Bua"
+  [Gender.Male]: "Bua",
 };
 
 export const availabilityLabel: Record<AvailabilityStatus, string> = {

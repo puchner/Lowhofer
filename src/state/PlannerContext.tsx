@@ -78,8 +78,7 @@ export function PlannerProvider({ children }: PropsWithChildren) {
 
   async function createPoll(input: CreatePollInput): Promise<MatchDay[]> {
     const newPolls = await createPollApi(input);
-
-    setMatchDays((currentMatchDays) => sortMatchDays([...currentMatchDays, ...newPolls]));
+    await refresh();
 
     return newPolls;
   }
