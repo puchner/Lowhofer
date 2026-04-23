@@ -7,6 +7,7 @@ import {
   canFinalizeAppointment,
   createEmptySuggestionDraft,
   normalizeSuggestionDrafts,
+  shouldConvertCurrentPollToSuggestion,
   SuggestionDraft,
 } from "../domain/pollHelpers";
 import { useSession } from "../session/sessionStore";
@@ -31,7 +32,7 @@ export function EditPollPage() {
 
     return [matchDay];
   }, [matchDay, matchDays]);
-  const canAddSuggestions = matchDay ? canFinalizeAppointment(matchDay) : false;
+  const canEditSuggestions = matchDay ? matchDay.status === "open" : false;
   const [suggestions, setSuggestions] = useState<SuggestionDraft[]>([createEmptySuggestionDraft()]);
   const [removedSuggestionIds, setRemovedSuggestionIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +42,7 @@ export function EditPollPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!matchDay || !canAddSuggestions) {
+    if (!matchDay || !canEditSuggestions) {
       return;
     }
 
@@ -57,21 +58,40 @@ export function EditPollPage() {
         throw new Error("suggestions_required");
       }
 
+      if (remainingSuggestionCount === 1 && newSuggestions.length === 0) {
+        await updatePoll({
+          pollId: visibleExistingSuggestions[0].id,
+          finalizePlannedAppointment: true,
+        });
+        navigate("/");
+        return;
+      }
+
+      if (
+        shouldConvertCurrentPollToSuggestion(
+          matchDay,
+          visibleExistingSuggestions.map((suggestion) => suggestion.id),
+          finalSuggestionCount,
+        )
+      ) {
+        await updatePoll({
+          pollId: matchDay.id,
+          type: "date-finding",
+        });
+      }
+
       for (const suggestionId of removedSuggestionIds) {
         await deletePoll(suggestionId);
       }
 
-      if (finalSuggestionCount === 1) {
-        if (remainingSuggestionCount === 1 && newSuggestions.length === 0) {
-          await updatePoll({
-            pollId: visibleExistingSuggestions[0].id,
-            finalizePlannedAppointment: true,
-          });
-        } else if (newSuggestions.length > 0) {
-          await createPoll(buildCreatePollInputForMatchDay(matchDay, newSuggestions));
-        }
-      } else if (newSuggestions.length > 0) {
-        await createPoll(buildCreatePollInputForMatchDay(matchDay, newSuggestions));
+      if (newSuggestions.length > 0) {
+        await createPoll(
+          buildCreatePollInputForMatchDay(
+            matchDay,
+            newSuggestions,
+            finalSuggestionCount === 1 ? "match" : "date-finding",
+          ),
+        );
       }
 
       navigate("/");
@@ -157,12 +177,12 @@ export function EditPollPage() {
           })}
         </div>
 
-        {canAddSuggestions ? (
+        {canEditSuggestions ? (
           <SuggestionEditor heading="Neue Vorschläge" onChange={setSuggestions} suggestions={suggestions} />
         ) : null}
 
         {error ? <p className="text-sm font-semibold text-error">{error}</p> : null}
-        {canAddSuggestions ? (
+        {canEditSuggestions ? (
           <button className="btn btn-secondary min-h-12 w-full rounded-lg text-petrol-900" disabled={isSaving} type="submit">
             {isSaving ? "Wird gespeichert..." : "Änderungen speichern"}
           </button>

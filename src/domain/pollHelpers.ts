@@ -1,4 +1,4 @@
-import { LeagueFixture, MatchDay } from "./types";
+import { LeagueFixture, MatchDay, PollType } from "./types";
 
 export interface SuggestionDraft {
   date: string;
@@ -33,8 +33,27 @@ export function normalizeSuggestionDrafts(suggestions: SuggestionDraft[]): Norma
     .filter((suggestion) => suggestion.date);
 }
 
+export function resolvePollTypeForSuggestions(
+  suggestionCount: number,
+  singleSuggestionType: PollType = "match",
+): PollType {
+  return suggestionCount === 1 ? singleSuggestionType : "date-finding";
+}
+
 export function canFinalizeAppointment(matchDay: Pick<MatchDay, "type" | "appointmentStatus">): boolean {
   return matchDay.type === "date-finding" && matchDay.appointmentStatus === "planned";
+}
+
+export function shouldConvertCurrentPollToSuggestion(
+  matchDay: Pick<MatchDay, "id" | "type" | "appointmentStatus">,
+  visibleSuggestionIds: string[],
+  finalSuggestionCount: number,
+): boolean {
+  return (
+    visibleSuggestionIds.includes(matchDay.id) &&
+    !canFinalizeAppointment(matchDay) &&
+    finalSuggestionCount > 1
+  );
 }
 
 export function getMatchDaySourceFixtureId(
@@ -66,35 +85,39 @@ export function getOpenLeagueFixtures(
 export function buildCreatePollInputForFixture(
   fixture: Pick<LeagueFixture, "id" | "opponent" | "homeAway">,
   suggestions: NormalizedSuggestion[],
+  singleSuggestionType: PollType = "match",
 ) {
   const firstSuggestion = suggestions[0];
+  const type = resolvePollTypeForSuggestions(suggestions.length, singleSuggestionType);
 
   return {
     title: fixture.opponent,
-    type: suggestions.length === 1 ? ("match" as const) : ("date-finding" as const),
-    date: suggestions.length === 1 ? firstSuggestion?.date : undefined,
-    time: suggestions.length === 1 ? firstSuggestion?.time : undefined,
+    type,
+    date: type === "match" ? firstSuggestion?.date : undefined,
+    time: type === "match" ? firstSuggestion?.time : undefined,
     opponent: fixture.opponent,
     homeAway: fixture.homeAway,
     sourceFixtureId: fixture.id,
-    suggestions: suggestions.length > 1 ? suggestions : undefined,
+    suggestions: type === "date-finding" ? suggestions : undefined,
   };
 }
 
 export function buildCreatePollInputForMatchDay(
   matchDay: Pick<MatchDay, "title" | "opponent" | "homeAway" | "sourceFixtureId" | "leagueGameNr">,
   suggestions: NormalizedSuggestion[],
+  singleSuggestionType: PollType = "match",
 ) {
   const firstSuggestion = suggestions[0];
+  const type = resolvePollTypeForSuggestions(suggestions.length, singleSuggestionType);
 
   return {
     title: matchDay.title,
-    type: suggestions.length === 1 ? ("match" as const) : ("date-finding" as const),
-    date: suggestions.length === 1 ? firstSuggestion?.date : undefined,
-    time: suggestions.length === 1 ? firstSuggestion?.time : undefined,
+    type,
+    date: type === "match" ? firstSuggestion?.date : undefined,
+    time: type === "match" ? firstSuggestion?.time : undefined,
     opponent: matchDay.opponent,
     homeAway: matchDay.homeAway,
     sourceFixtureId: getMatchDaySourceFixtureId(matchDay),
-    suggestions: suggestions.length > 1 ? suggestions : undefined,
+    suggestions: type === "date-finding" ? suggestions : undefined,
   };
 }

@@ -4,6 +4,7 @@ import { jsonResponse, readJsonBody } from "../_shared/http";
 import { getLeagueContext } from "../_shared/leagueContext";
 import { buildPollInsert, mapPollWithAppointment, PollRequestBody } from "../_shared/pollMapping";
 import { berlinDateTimeToIso, getBerlinTime } from "../../src/domain/berlinDateTime";
+import { resolvePollTypeForSuggestions } from "../../src/domain/pollHelpers";
 import {
   createAppointment,
   createCustomMatch,
@@ -189,12 +190,10 @@ export function buildPollDrafts(body: PollRequestBody, createdByPlayerId: string
   const suggestionInputs = body.suggestions ?? [];
 
   if (suggestionInputs.length > 0) {
-    const requestedPollType =
-      suggestionInputs.length > 1
-        ? "date-finding"
-        : body.type === "date-finding"
-          ? "date-finding"
-          : "match";
+    const requestedPollType = resolvePollTypeForSuggestions(
+      suggestionInputs.length,
+      body.type === "date-finding" ? "date-finding" : "match",
+    );
     const seenKeys = new Set<string>();
 
     return suggestionInputs.map((suggestion) => {
