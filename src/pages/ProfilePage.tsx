@@ -10,9 +10,9 @@ import {
   type GeneratedAvatarOption,
 } from "../domain/avatarOptions";
 import { genderLabel } from "../domain/labels";
-import { isTrainingMemberRole } from "../domain/playerRoles";
+import { canEditOwnProfile } from "../domain/permissions";
 import { Gender, Player, Position } from "../domain/types";
-import { useSession } from "../session/sessionStore";
+import { useCurrentUserCapabilities, useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 const allPositions = Object.values(Position);
@@ -20,6 +20,7 @@ const allGenders = Object.values(Gender);
 
 export function ProfilePage() {
   const session = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const planner = usePlanner();
   const [profile, setProfile] = useState<Player | null>(null);
   const [displayName, setDisplayName] = useState("");
@@ -32,13 +33,13 @@ export function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const isTrainingMember = isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
+  const canEditProfile = canEditOwnProfile(currentUser);
 
   useEffect(() => {
     let isMounted = true;
 
     setIsLoading(true);
-    if (isTrainingMember) {
+    if (!canEditProfile) {
       setIsLoading(false);
       return;
     }
@@ -65,7 +66,7 @@ export function ProfilePage() {
     return () => {
       isMounted = false;
     };
-  }, [isTrainingMember]);
+  }, [canEditProfile]);
 
   const previewPlayer = useMemo<Player>(
     () => ({
@@ -154,7 +155,7 @@ export function ProfilePage() {
     return <p className="font-semibold text-base-content/70">Profil wird geladen...</p>;
   }
 
-  if (isTrainingMember) {
+  if (!canEditProfile) {
     return (
       <section className="rounded-lg border border-primary/15 bg-base-100 p-4 shadow-sm">
         <h2 className="text-xl font-bold text-petrol-900">Lowhofer - Nur Lesen</h2>

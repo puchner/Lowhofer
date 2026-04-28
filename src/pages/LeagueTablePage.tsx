@@ -1,10 +1,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { fetchLeagueSource, fetchLeagueTable, LeagueTableResult, updateLeagueSource } from "../api/plannerApi";
 import { LeagueTable } from "../components/league/LeagueTable";
-import { useSession } from "../session/sessionStore";
+import { canManageLeagueSource } from "../domain/permissions";
+import { useCurrentUserCapabilities } from "../session/sessionStore";
 
 export function LeagueTablePage() {
-  const { selectedPlayerIsAdmin } = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const [tableData, setTableData] = useState<LeagueTableResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +43,7 @@ export function LeagueTablePage() {
         <LeagueTable fetchedAt={tableData.fetchedAt} isStale={tableData.isStale} standings={tableData.standings} />
       )}
 
-      {selectedPlayerIsAdmin && <LeagueSourceAdmin onSaved={loadTable} />}
+      {canManageLeagueSource(currentUser) && <LeagueSourceAdmin onSaved={loadTable} />}
     </section>
   );
 }

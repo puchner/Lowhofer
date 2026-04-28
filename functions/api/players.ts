@@ -12,7 +12,6 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
       displayName: player.display_name,
       role: player.role ?? "member",
       gender: player.gender,
-      isAdmin: player.is_admin,
       avatar: player.avatar_kind
         ? {
             kind: player.avatar_kind,

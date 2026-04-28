@@ -5,22 +5,24 @@ import { MatchHostCard } from "../components/match/MatchHostCard";
 import { PollAdminActions } from "../components/polls/PollAdminActions";
 import { PlayerPill } from "../components/players/PlayerPill";
 import { analyzeMatchDay } from "../domain/analyzeSquad";
+import { canManageMatches } from "../domain/permissions";
 import { canFinalizeAppointment } from "../domain/pollHelpers";
 import { sortPlayersForCurrentUser } from "../domain/playerSorting";
 import { resolveVenueDetails } from "../domain/teamVenues";
 import { AvailabilityStatus, MatchAvailability, Player } from "../domain/types";
 import { StatusPill } from "../components/ui/StatusPill";
 import { TrafficLight } from "../components/ui/TrafficLight";
-import { useSession } from "../session/sessionStore";
+import { useCurrentUserCapabilities, useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function MatchDayDetailPage() {
   const navigate = useNavigate();
   const { matchDayId } = useParams();
   const { deletePoll, matchDays, players, updatePoll } = usePlanner();
-  const { selectedPlayerId, selectedPlayerIsAdmin } = useSession();
+  const { selectedPlayerId } = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const matchDay = matchDays.find((item) => item.id === matchDayId);
-  const canAdmin = selectedPlayerIsAdmin;
+  const canAdmin = canManageMatches(currentUser);
 
   const playerRows = useMemo(() => {
     if (!matchDay) {

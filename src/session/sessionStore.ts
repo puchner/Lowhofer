@@ -1,4 +1,5 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useMemo } from "react";
+import { UserCapabilities } from "../domain/permissions";
 import { SessionContextValue } from "./sessionTypes";
 
 export const SessionContext = createContext<SessionContextValue | undefined>(undefined);
@@ -11,4 +12,16 @@ export function useSession(): SessionContextValue {
   }
 
   return value;
+}
+
+export function useCurrentUserCapabilities(): UserCapabilities {
+  const session = useSession();
+
+  return useMemo(
+    () => ({
+      isAdmin: session.selectedPlayerIsAdmin,
+      role: session.selectedPlayerRole,
+    }),
+    [session.selectedPlayerIsAdmin, session.selectedPlayerRole],
+  );
 }

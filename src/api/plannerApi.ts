@@ -7,7 +7,6 @@ interface ApiPlayer {
   displayName: string;
   role?: Player["role"];
   gender: Player["gender"];
-  isAdmin: boolean;
   avatar?: {
     kind: "generated" | "uploaded";
     style?: string;

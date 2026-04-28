@@ -12,25 +12,26 @@ import { analyzeMatchDay } from "../domain/analyzeSquad";
 import { formatMatchDateTime } from "../domain/dateAndTimeUtils";
 import { groupMatchDays } from "../domain/matchDayGroups";
 import { getAllUpcomingMatchDays } from "../domain/matchDayFilters";
+import { canManageMatches, canRespondToMatch } from "../domain/permissions";
 import { canFinalizeAppointment } from "../domain/pollHelpers";
-import { isTrainingMemberRole } from "../domain/playerRoles";
 import { LeagueStanding } from "../domain/leagueTypes";
 import { AvailabilityStatus, MatchDay } from "../domain/types";
-import { useSession } from "../session/sessionStore";
+import { useCurrentUserCapabilities, useSession } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const { deletePoll, error, isLoading, matchDays, players, refresh, updateAvailability, updatePoll } = usePlanner();
   const session = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const [isOpeningCalendarFeed, setIsOpeningCalendarFeed] = useState(false);
   const [calendarFeedUrl, setCalendarFeedUrl] = useState<string | null>(null);
   const [calendarWebcalUrl, setCalendarWebcalUrl] = useState<string | null>(null);
   const [isCalendarDialogOpen, setIsCalendarDialogOpen] = useState(false);
   const [leagueStandings, setLeagueStandings] = useState<LeagueStanding[] | null>(null);
   const activePlayerId = session.selectedPlayerId;
-  const canAdmin = session.selectedPlayerIsAdmin;
-  const canWriteAvailability = !isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
+  const canAdmin = canManageMatches(currentUser);
+  const canWriteAvailability = canRespondToMatch(currentUser);
   const allUpcomingMatchDays = getAllUpcomingMatchDays(matchDays);
   const groupedMatchDays = groupMatchDays(allUpcomingMatchDays);
 

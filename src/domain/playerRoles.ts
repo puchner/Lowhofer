@@ -17,7 +17,7 @@ export function isTrainingMember(player: Pick<Player, "role">): boolean {
   return isTrainingMemberRole(getPlayerRole(player));
 }
 
-export function isTeamPlayer(player: Pick<Player, "role">): boolean {
+export function isPlayer(player: Pick<Player, "role">): boolean {
   return !isTrainingMember(player);
 }
 

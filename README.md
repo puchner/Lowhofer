@@ -1,6 +1,27 @@
 # Lowhofer Spieltagsplanung
 
-MVP-Grundgeruest fuer eine responsive React-Webanwendung zur Spieltags- und Verfuegbarkeitsplanung der Mixed-Volleyballmannschaft Lowhofer.
+Responsive Web-App zur Spieltags- und Verfuegbarkeitsplanung der Mixed-Volleyballmannschaft Lowhofer. Die App ersetzt Chat-/Tabellen-Abstimmungen durch einen kleinen, produktiv genutzten Team-Workflow fuer Termine, Rueckmeldungen, Spielerprofile und Liga-Daten.
+
+## Was die App kann
+
+- Team-Login mit gemeinsamem Passwort und Auswahl des aktiven Spielers
+- Spieltage und Terminvorschlaege aus offiziellen Liga-Daten anlegen
+- Rueckmeldungen pro Spieler speichern: Zusage, Absage, unsicher, Kommentar
+- Admin-Workflow fuer Termine, Nachholtermine, Terminfinalisierung und Liga-Quelle
+- Spielerprofile mit Positionen, Hauptposition, Geschlecht und Avatar pflegen
+- Kaderanalyse mit Zusagen, Positionsabdeckung und Mixed-Regel-Hinweisen
+- Liga-Tabelle und Spielplan serverseitig aus XML-Feeds laden und cachen
+- Kalenderfeed fuer abonnierbare Spieltermine
+- Gemeinsamer Nur-Lesen-Zugang fuer Mitleser ohne Spielerrechte
+
+## Technik
+
+- React 19, TypeScript, Vite, React Router
+- Tailwind CSS, daisyUI und lucide-react fuer die UI
+- Cloudflare Pages Functions als serverseitige API-Schicht
+- Supabase/Postgres als Datenbank hinter Service-Role-gesicherten Functions
+- Lokale Supabase-Testumgebung mit synthetischen Daten oder Produktionsdump
+- Vitest fuer Domain- und API-nahe Fachlogiktests
 
 ## Start
 
@@ -21,7 +42,7 @@ Voraussetzungen:
 Einmaliges lokales Aufsetzen:
 
 ```bash
-npm run local:setup
+npm run local:reset
 ```
 
 Das macht folgendes:
@@ -49,15 +70,15 @@ Das Vite-Dev-Setup proxyt `/api/*` automatisch an die lokale Functions-Instanz. 
 
 Nuetzliche Kommandos:
 
-- `npm run local:services:start` startet Supabase und erzeugt `.dev.vars`, ohne die DB zurueckzusetzen
+- `npm run local:start` startet Supabase und erzeugt `.dev.vars`, ohne die DB zurueckzusetzen
 - `npm run local:reset` setzt die lokale DB komplett neu auf
 - `npm run local:db:stop` stoppt den lokalen Supabase-Stack
 - `npm run local:testdata` erzeugt nur die synthetische SQL-Datei fuer lokale Testdaten neu
-- `npm run pages:local` startet nur die lokale Functions-Instanz gegen die lokale DB, ohne Vite
+- `npm run local:functions` startet nur die lokale Functions-Instanz gegen die lokale DB, ohne Vite
 
 ### Standard: synthetische Testdaten
 
-Ohne Produktionsdump erzeugt `npm run local:setup` automatisch eine lokale Testdatenbasis:
+Ohne Produktionsdump erzeugt `npm run local:reset` automatisch eine lokale Testdatenbasis:
 
 - 12 Spieler mit gemischten Positionen, Avataren und 2 Admins
 - bestehende und offene Abstimmungen mit gemischten Rueckmeldungen
@@ -87,6 +108,30 @@ npx supabase db dump --data-only --schema public --db-url "postgresql://..." -f 
 ```
 
 Wenn sich das Schema aendert oder ihr neue Testdaten wollt, reicht erneut `npm run local:reset`. Im normalen Alltag ist kein erneutes Schema-Setzen und kein Reimport bei jedem Start noetig.
+
+### Optional: lokalen Code gegen Produktiv-DB starten
+
+Fuer gezielte Smoke-Tests kann die lokale App gegen die produktive Supabase-DB laufen. Das ist kein Standard-Entwicklungsworkflow: API-Aktionen schreiben dann in Produktion.
+
+Lege lokal eine nicht versionierte Datei `.dev.vars.production` an:
+
+```text
+SUPABASE_URL=https://...
+SUPABASE_SERVICE_ROLE_KEY=...
+SESSION_SECRET=lokales-session-secret
+CALENDAR_FEED_TOKEN=optional
+LOCAL_TEST_DATA=false
+```
+
+Wichtig: `LOCAL_TEST_DATA=false` verhindert, dass Liga- und Fixture-Endpunkte lokale Testdaten liefern.
+
+Dann starten:
+
+```bash
+npm run prod-db:dev
+```
+
+Das startet Wrangler mit den Werten aus `.dev.vars.production` auf `http://127.0.0.1:8789` und Vite mit HMR auf `http://127.0.0.1:5173`. Technisch laeuft Wrangler dafuer aus einem temporaeren Arbeitsverzeichnis, damit die normale lokale `.dev.vars` mit Testdaten nicht geladen wird.
 
 ## Cloudflare Pages
 

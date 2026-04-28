@@ -10,6 +10,7 @@ import type {
   DbPlayerRow,
   DbPlayerWithPositions,
 } from "../../src/data/supabaseMappers";
+import { TRAINING_MEMBER_ROLE } from "../../src/domain/playerRoles";
 import { CloudflareEnv, getRequiredEnv } from "./env";
 
 interface TeamSettingsPasswordRow {
@@ -34,7 +35,7 @@ export async function listActivePlayers(env: CloudflareEnv): Promise<DbPlayerWit
 export async function listActiveTeamPlayers(env: CloudflareEnv): Promise<DbPlayerWithPositions[]> {
   return supabaseFetch<DbPlayerWithPositions[]>(
     env,
-    `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&role=neq.training_member&order=sort_order.asc`,
+    `/players?select=${playerSelect},player_positions(id,player_id,position,is_primary)&is_active=eq.true&role=neq.${TRAINING_MEMBER_ROLE}&order=sort_order.asc`,
   );
 }
 

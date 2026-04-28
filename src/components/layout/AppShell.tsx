@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { fetchLeagueSource } from "../../api/plannerApi";
 import { PlayerAvatar } from "../players/PlayerAvatar";
-import { isTrainingMemberRole } from "../../domain/playerRoles";
+import { isPlayer } from "../../domain/playerRoles";
 import { SessionGate } from "../../session/SessionGate";
 import { useSession } from "../../session/sessionStore";
 import { usePlanner } from "../../state/plannerStore";
@@ -149,7 +149,7 @@ function SessionControls() {
   const session = useSession();
   const { players } = usePlanner();
   const selectedPlayer = players.find((player) => player.id === session.selectedPlayerId);
-  const isTrainingMember = isTrainingMemberRole(session.selectedPlayerRole ?? undefined);
+  const selectedAccountIsPlayer = isPlayer({ role: session.selectedPlayerRole ?? undefined });
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
@@ -157,7 +157,7 @@ function SessionControls() {
         {selectedPlayer ? <PlayerAvatar className="ring-white/20" player={selectedPlayer} size="sm" /> : null}
         <div className="min-w-0">
           <span className="font-semibold uppercase tracking-wide text-neon">
-            {isTrainingMember ? "Zugang" : "Spieler"}
+            {selectedAccountIsPlayer ? "Spieler" : "Zugang"}
           </span>
           <span className="ml-2 font-black text-white">{session.selectedPlayerDisplayName}</span>
         </div>

@@ -2,7 +2,8 @@ import { CloudflareEnv } from "../../_shared/env";
 import { requireSelectedPlayer } from "../../_shared/auth";
 import { jsonResponse, readJsonBody } from "../../_shared/http";
 import { getPlayerUpdateState, upsertPlayerUpdateState } from "../../_shared/supabase";
-import { isTrainingMemberRole } from "../../../src/domain/playerRoles";
+import { canEditOwnProfile } from "../../../src/domain/permissions";
+import type { PlayerRole } from "../../../src/domain/playerRoles";
 
 const initialLastSeenUpdateAt = "1970-01-01T00:00:00.000Z";
 
@@ -17,7 +18,7 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
     return authenticated;
   }
 
-  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+  if (!canPersistUpdateState(authenticated)) {
     return jsonResponse({ lastSeenUpdateAt: new Date().toISOString() });
   }
 
@@ -35,7 +36,7 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
     return authenticated;
   }
 
-  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+  if (!canPersistUpdateState(authenticated)) {
     return jsonResponse({ lastSeenUpdateAt: new Date().toISOString() });
   }
 
@@ -55,3 +56,10 @@ export const onRequestPost: PagesFunction<CloudflareEnv> = async ({ request, env
 
   return jsonResponse({ lastSeenUpdateAt: lastSeenUpdateAt.toISOString() });
 };
+
+function canPersistUpdateState(authenticated: { selectedPlayerIsAdmin: boolean; selectedPlayerRole?: PlayerRole | null }) {
+  return canEditOwnProfile({
+    isAdmin: authenticated.selectedPlayerIsAdmin,
+    role: authenticated.selectedPlayerRole,
+  });
+}

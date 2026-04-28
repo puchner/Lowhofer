@@ -9,13 +9,14 @@ import {
   normalizeSuggestionDrafts,
   SuggestionDraft,
 } from "../domain/pollHelpers";
-import { useSession } from "../session/sessionStore";
+import { canManageMatches } from "../domain/permissions";
+import { useCurrentUserCapabilities } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function NewPollPage() {
   const navigate = useNavigate();
   const { createPoll, leagueFixtures, matchDays } = usePlanner();
-  const { selectedPlayerIsAdmin } = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const [selectedFixtureId, setSelectedFixtureId] = useState("");
   const [suggestions, setSuggestions] = useState<SuggestionDraft[]>([]);
   const openLeagueFixtures = useMemo(() => getOpenLeagueFixtures(leagueFixtures, matchDays), [leagueFixtures, matchDays]);
@@ -58,7 +59,7 @@ export function NewPollPage() {
     navigate("/");
   }
 
-  if (!selectedPlayerIsAdmin) {
+  if (!canManageMatches(currentUser)) {
     return (
       <section className="rounded-lg border border-warning/40 bg-warning/10 p-4">
         <h2 className="text-xl font-bold text-petrol-900">Admin-Funktion</h2>

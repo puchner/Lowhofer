@@ -10,14 +10,15 @@ import {
   shouldConvertCurrentPollToSuggestion,
   SuggestionDraft,
 } from "../domain/pollHelpers";
-import { useSession } from "../session/sessionStore";
+import { canManageMatches } from "../domain/permissions";
+import { useCurrentUserCapabilities } from "../session/sessionStore";
 import { usePlanner } from "../state/plannerStore";
 
 export function EditPollPage() {
   const navigate = useNavigate();
   const { matchDayId } = useParams();
   const { createPoll, deletePoll, matchDays, updatePoll } = usePlanner();
-  const { selectedPlayerIsAdmin } = useSession();
+  const currentUser = useCurrentUserCapabilities();
   const matchDay = useMemo(() => matchDays.find((item) => item.id === matchDayId), [matchDayId, matchDays]);
   const existingSuggestions = useMemo(() => {
     if (!matchDay) {
@@ -106,7 +107,7 @@ export function EditPollPage() {
     setRemovedSuggestionIds((current) => (current.includes(suggestionId) ? current : [...current, suggestionId]));
   }
 
-  if (!selectedPlayerIsAdmin) {
+  if (!canManageMatches(currentUser)) {
     return (
       <section className="rounded-lg border border-warning/40 bg-warning/10 p-4">
         <h2 className="text-xl font-bold text-petrol-900">Admin-Funktion</h2>

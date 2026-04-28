@@ -52,11 +52,11 @@ Fuer lokale Entwicklung ist jetzt ein Supabase-CLI-Workflow im Repo vorgesehen.
 Wichtige Kommandos aus dem Projekt-Root:
 
 ```bash
-npm run local:setup
+npm run local:reset
 npm run local:dev
 ```
 
-`npm run local:setup` startet den lokalen Stack und setzt die Datenbank neu auf:
+`npm run local:reset` startet den lokalen Stack und setzt die Datenbank neu auf:
 
 - `supabase/schema/current.sql`
 - standardmaessig synthetische lokale Testdaten aus `scripts/generateLocalTestData.mjs`

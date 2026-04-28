@@ -3,7 +3,7 @@ import { jsonResponse } from "./http";
 import { readSession, SessionPayload } from "./session";
 import { getActivePlayer } from "./supabase";
 import { DbPlayerRole } from "../../src/data/supabaseMappers";
-import { isTrainingMemberRole } from "../../src/domain/playerRoles";
+import { canEditOwnProfile, canRespondToMatch, isAdmin } from "../../src/domain/permissions";
 
 export interface AuthenticatedRequest {
   session: SessionPayload;
@@ -47,14 +47,14 @@ export async function requireAdmin(request: Request, env: CloudflareEnv): Promis
     return authenticated;
   }
 
-  if (!authenticated.selectedPlayerIsAdmin) {
+  if (!isAdmin({ isAdmin: authenticated.selectedPlayerIsAdmin, role: authenticated.selectedPlayerRole })) {
     return jsonResponse({ error: "admin_required" }, { status: 403 });
   }
 
   return authenticated;
 }
 
-export async function requireWritableMember(
+export async function requireProfileEditor(
   request: Request,
   env: CloudflareEnv,
 ): Promise<AuthenticatedRequest | Response> {
@@ -64,7 +64,24 @@ export async function requireWritableMember(
     return authenticated;
   }
 
-  if (isTrainingMemberRole(authenticated.selectedPlayerRole)) {
+  if (!canEditOwnProfile({ isAdmin: authenticated.selectedPlayerIsAdmin, role: authenticated.selectedPlayerRole })) {
+    return jsonResponse({ error: "training_member_read_only" }, { status: 403 });
+  }
+
+  return authenticated;
+}
+
+export async function requireAvailabilityResponder(
+  request: Request,
+  env: CloudflareEnv,
+): Promise<AuthenticatedRequest | Response> {
+  const authenticated = await requireSelectedPlayer(request, env);
+
+  if (authenticated instanceof Response) {
+    return authenticated;
+  }
+
+  if (!canRespondToMatch({ isAdmin: authenticated.selectedPlayerIsAdmin, role: authenticated.selectedPlayerRole })) {
     return jsonResponse({ error: "training_member_read_only" }, { status: 403 });
   }
 
