@@ -2,6 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { fetchLeagueSource } from "../../api/plannerApi";
+import { LEAGUE_SOURCE_UPDATED_EVENT, LeagueSourceUpdatedDetail } from "../../domain/leagueSourceEvents";
 import { PlayerAvatar } from "../players/PlayerAvatar";
 import { isPlayer } from "../../domain/playerRoles";
 import { SessionGate } from "../../session/SessionGate";
@@ -126,6 +127,17 @@ function LeagueSiteLink() {
     fetchLeagueSource()
       .then((settings) => setLeagueUrl(settings.leagueBaseUrl))
       .catch(() => {});
+
+    function handleLeagueSourceUpdated(event: Event) {
+      const { leagueBaseUrl } = (event as CustomEvent<LeagueSourceUpdatedDetail>).detail;
+      setLeagueUrl(leagueBaseUrl);
+    }
+
+    window.addEventListener(LEAGUE_SOURCE_UPDATED_EVENT, handleLeagueSourceUpdated);
+
+    return () => {
+      window.removeEventListener(LEAGUE_SOURCE_UPDATED_EVENT, handleLeagueSourceUpdated);
+    };
   }, []);
 
   if (!leagueUrl) {

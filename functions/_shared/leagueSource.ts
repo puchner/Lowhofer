@@ -1,58 +1,30 @@
-/**
- * Leitet die konkreten XML-Abruf-URLs aus einer Liga-Basis-URL ab.
- *
- * Bevorzugter Ablauf:
- * 1. HTML der Basis-URL abrufen und XML-Export-Links darin erkennen
- * 2. Fallback: XML-URLs aus der Saison-ID in der Basis-URL ableiten
- */
-
 export interface DerivedLeagueUrls {
+  baseUrl: string;
   tableUrl: string;
   fixturesUrl: string;
 }
 
-export function validateLeagueBaseUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
+const LEAGUE_ORIGIN = "https://www.volleyball-freizeit.de";
 
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
-  } catch {
-    return false;
-  }
+export function validateSeasonKey(seasonKey: string): boolean {
+  return /^\d+$/.test(seasonKey.trim());
 }
 
-export async function deriveLeagueUrls(baseUrl: string): Promise<DerivedLeagueUrls> {
-  const idMatch = baseUrl.match(/\/saison\/(\d+)/);
-  const seasonId = idMatch?.[1];
+export function extractSeasonKeyFromLeagueBaseUrl(baseUrl: string | null | undefined): string | null {
+  return baseUrl?.match(/\/saison\/(\d+)/)?.[1] ?? null;
+}
 
-  // HTML-Parsing bevorzugt – findet die echten XML-Links
-  try {
-    const response = await fetch(baseUrl, { signal: AbortSignal.timeout(8000) });
+export function deriveLeagueUrls(seasonKey: string): DerivedLeagueUrls {
+  const normalizedSeasonKey = seasonKey.trim();
 
-    if (response.ok) {
-      const html = await response.text();
-      const tableMatch = html.match(/href="([^"]*sprung_tabelle[^"]*xml=1[^"]*)"/);
-      const fixturesMatch = html.match(/href="([^"]*sprung_spielplan[^"]*xml=1[^"]*)"/);
-
-      if (tableMatch && fixturesMatch) {
-        return {
-          tableUrl: new URL(tableMatch[1], baseUrl).href,
-          fixturesUrl: new URL(fixturesMatch[1], baseUrl).href,
-        };
-      }
-    }
-  } catch {
-    // Fallthrough zur ID-basierten Ableitung
+  if (!validateSeasonKey(normalizedSeasonKey)) {
+    throw new Error("ungueltige_saison_id");
   }
 
-  if (!seasonId) {
-    throw new Error("Keine gültige Liga-Basis-URL: Saison-ID nicht erkennbar und HTML-Parsing fehlgeschlagen.");
-  }
-
-  const origin = new URL(baseUrl).origin;
-
+  const baseUrl = `${LEAGUE_ORIGIN}/saison/${normalizedSeasonKey}`;
   return {
-    tableUrl: `${origin}/sprung_tabelle?i=${seasonId}&xml=1`,
-    fixturesUrl: `${origin}/sprung_spielplan?i=${seasonId}&xml=1`,
+    baseUrl,
+    tableUrl: `${LEAGUE_ORIGIN}/sprung_tabelle?i=${normalizedSeasonKey}&xml=1`,
+    fixturesUrl: `${LEAGUE_ORIGIN}/sprung_spielplan?i=${normalizedSeasonKey}&xml=1`,
   };
 }

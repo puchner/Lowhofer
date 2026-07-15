@@ -486,6 +486,7 @@ export interface TeamLeagueXmlUrls {
 }
 
 export interface TeamLeagueSettings extends TeamLeagueXmlUrls {
+  id: string;
   league_base_url: string | null;
 }
 
@@ -503,7 +504,7 @@ export async function getTeamLeagueXmlUrls(env: CloudflareEnv): Promise<TeamLeag
 export async function getTeamLeagueSettings(env: CloudflareEnv): Promise<TeamLeagueSettings | null> {
   const rows = await supabaseFetch<TeamLeagueSettings[]>(
     env,
-    "/team_settings?select=league_base_url,league_table_url,league_fixtures_url&limit=1",
+    "/team_settings?select=id,league_base_url,league_table_url,league_fixtures_url&limit=1",
   );
 
   return rows[0] ?? null;
@@ -515,7 +516,13 @@ export async function updateTeamLeagueSource(
   tableUrl: string,
   fixturesUrl: string,
 ): Promise<void> {
-  await supabaseFetch<void>(env, "/team_settings", {
+  const settings = await getTeamLeagueSettings(env);
+
+  if (!settings) {
+    throw new Error("team_settings_not_found");
+  }
+
+  await supabaseFetch<void>(env, `/team_settings?id=eq.${encodeURIComponent(settings.id)}`, {
     method: "PATCH",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({

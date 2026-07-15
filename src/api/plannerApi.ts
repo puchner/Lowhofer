@@ -116,6 +116,7 @@ export interface LeagueTableResult {
 }
 
 export interface LeagueSourceSettings {
+  seasonKey: string;
   leagueBaseUrl: string | null;
   leagueTableUrl: string | null;
   leagueFixturesUrl: string | null;
@@ -135,10 +136,10 @@ export async function fetchLeagueSource(): Promise<LeagueSourceSettings> {
   return requestJson<LeagueSourceSettings>("/api/team-settings/league-source");
 }
 
-export async function updateLeagueSource(leagueBaseUrl: string): Promise<LeagueSourceSettings> {
+export async function updateLeagueSource(seasonKey: string): Promise<LeagueSourceSettings> {
   return requestJson<LeagueSourceSettings>("/api/team-settings/league-source", {
     method: "PATCH",
-    body: JSON.stringify({ leagueBaseUrl }),
+    body: JSON.stringify({ seasonKey }),
   });
 }
 

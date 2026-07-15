@@ -1,10 +1,11 @@
 import { requireAdmin, requireSelectedPlayer } from "../../_shared/auth";
 import { CloudflareEnv } from "../../_shared/env";
 import { jsonResponse, readJsonBody } from "../../_shared/http";
-import { deriveLeagueUrls, validateLeagueBaseUrl } from "../../_shared/leagueSource";
+import { deriveLeagueUrls, extractSeasonKeyFromLeagueBaseUrl, validateSeasonKey } from "../../_shared/leagueSource";
 import { getTeamLeagueSettings, invalidateLeagueCache, updateTeamLeagueSource } from "../../_shared/supabase";
 
 const FALLBACK_LEAGUE_BASE_URL = "https://www.volleyball-freizeit.de/saison/1083";
+const FALLBACK_SEASON_KEY = "1083";
 
 export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
   const authenticated = await requireSelectedPlayer(request, env);
@@ -16,8 +17,10 @@ export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env 
   const settings = await getTeamLeagueSettings(env);
   const leagueBaseUrl =
     settings?.league_base_url ?? deriveLeagueBaseUrl(settings?.league_table_url) ?? FALLBACK_LEAGUE_BASE_URL;
+  const seasonKey = extractSeasonKeyFromLeagueBaseUrl(leagueBaseUrl) ?? FALLBACK_SEASON_KEY;
 
   return jsonResponse({
+    seasonKey,
     leagueBaseUrl,
     leagueTableUrl: settings?.league_table_url ?? null,
     leagueFixturesUrl: settings?.league_fixtures_url ?? null,
@@ -31,37 +34,30 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
     return authenticated;
   }
 
-  const body = await readJsonBody<{ leagueBaseUrl?: string }>(request);
+  const body = await readJsonBody<{ seasonKey?: string; leagueBaseUrl?: string }>(request);
 
-  if (!body?.leagueBaseUrl) {
-    return jsonResponse({ error: "leagueBaseUrl_required" }, { status: 400 });
+  const seasonKey = body?.seasonKey?.trim() ?? extractSeasonKeyFromLeagueBaseUrl(body?.leagueBaseUrl)?.trim();
+
+  if (!seasonKey) {
+    return jsonResponse({ error: "seasonKey_required" }, { status: 400 });
   }
 
-  const { leagueBaseUrl } = body;
-
-  if (!validateLeagueBaseUrl(leagueBaseUrl)) {
-    return jsonResponse({ error: "invalid_url" }, { status: 400 });
+  if (!validateSeasonKey(seasonKey)) {
+    return jsonResponse({ error: "invalid_season_key" }, { status: 400 });
   }
 
-  let tableUrl: string;
-  let fixturesUrl: string;
+  const { baseUrl, tableUrl, fixturesUrl } = deriveLeagueUrls(seasonKey);
 
   try {
-    const derived = await deriveLeagueUrls(leagueBaseUrl);
-    tableUrl = derived.tableUrl;
-    fixturesUrl = derived.fixturesUrl;
-  } catch (err) {
-    return jsonResponse(
-      { error: err instanceof Error ? err.message : "url_derivation_failed" },
-      { status: 422 },
-    );
+    await updateTeamLeagueSource(env, baseUrl, tableUrl, fixturesUrl);
+    await invalidateLeagueCache(env);
+  } catch {
+    return jsonResponse({ error: "league_source_update_failed" }, { status: 503 });
   }
 
-  await updateTeamLeagueSource(env, leagueBaseUrl, tableUrl, fixturesUrl);
-  await invalidateLeagueCache(env);
-
   return jsonResponse({
-    leagueBaseUrl,
+    seasonKey,
+    leagueBaseUrl: baseUrl,
     leagueTableUrl: tableUrl,
     leagueFixturesUrl: fixturesUrl,
   });
