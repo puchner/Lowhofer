@@ -95,6 +95,7 @@ export function MatchDayDetailPage() {
                   <>
                     {venueDetails.venueName ? <p className="font-semibold text-petrol-900">{venueDetails.venueName}</p> : null}
                     {venueDetails.address ? <p className="text-base-content/80">{venueDetails.address}</p> : null}
+                    {venueDetails.notes ? <p className="text-sm text-base-content/70">{venueDetails.notes}</p> : null}
                   </>
                 ) : venueDetails.venueName ? (
                   <p className="font-semibold text-petrol-900">{venueDetails.venueName}</p>
@@ -171,6 +172,10 @@ const responseOrder = [
 function buildResponseGroups(rows: PlayerRow[]) {
   return responseOrder.map((status) => ({
     status,
-    rows: rows.filter((row) => (row.availability?.status ?? AvailabilityStatus.Unknown) === status),
+    rows: rows
+      .filter((row) => (row.availability?.status ?? AvailabilityStatus.Unknown) === status)
+      .sort((a, b) => status === AvailabilityStatus.Unknown
+        ? Number(Boolean(a.player.tempUnavailableReason)) - Number(Boolean(b.player.tempUnavailableReason))
+        : 0),
   }));
 }

@@ -1,37 +1,14 @@
-import { DbGender, DbPosition } from "../../src/data/supabaseMappers";
-import { isGeneratedAvatarOption } from "../../src/domain/avatarOptions";
+import type { DbGender, DbPosition } from "../../src/data/supabaseMappers";
 import { CloudflareEnv } from "../_shared/env";
 import { requireProfileEditor } from "../_shared/auth";
 import { jsonResponse, readJsonBody } from "../_shared/http";
+import { validatePlayerProfileInput } from "../_shared/playerProfile";
 import {
   findActivePlayerByDisplayName,
   getPlayerWithPositions,
   replacePlayerPositions,
   updatePlayerCoreProfile,
 } from "../_shared/supabase";
-
-const validGenders = new Set<DbGender>(["female", "male", "diverse"]);
-const validPositions = new Set<DbPosition>(["setter", "outside", "middle", "opposite", "libero"]);
-
-interface ProfileInput {
-  displayName?: unknown;
-  gender?: unknown;
-  positions?: unknown;
-  primaryPosition?: unknown;
-  avatar?: unknown;
-}
-
-interface ValidProfileInput {
-  displayName: string;
-  gender: DbGender;
-  positions: DbPosition[];
-  primaryPosition: DbPosition;
-  avatar: {
-    kind: "generated";
-    style: string;
-    seed: string;
-  };
-}
 
 export const onRequestGet: PagesFunction<CloudflareEnv> = async ({ request, env }) => {
   const authenticated = await requireProfileEditor(request, env);
@@ -56,8 +33,8 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
     return authenticated;
   }
 
-  const body = await readJsonBody<ProfileInput>(request);
-  const validation = validateProfileInput(body);
+  const body = await readJsonBody<Parameters<typeof validatePlayerProfileInput>[0]>(request);
+  const validation = validatePlayerProfileInput(body);
 
   if ("error" in validation) {
     return jsonResponse({ error: validation.error }, { status: 400 });
@@ -77,6 +54,8 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
       avatar_style: validation.avatar.style,
       avatar_seed: validation.avatar.seed,
       avatar_storage_path: null,
+      temp_unavailable_reason: validation.tempUnavailableReason,
+      temp_unavailable_note: validation.tempUnavailableNote,
     });
 
     await replacePlayerPositions(
@@ -104,59 +83,6 @@ export const onRequestPatch: PagesFunction<CloudflareEnv> = async ({ request, en
   return jsonResponse({ profile: mapProfile(player) });
 };
 
-function validateProfileInput(body: ProfileInput | null): ValidProfileInput | { error: string } {
-  if (!body) {
-    return { error: "invalid_json" };
-  }
-
-  if (typeof body.displayName !== "string") {
-    return { error: "display_name_required" };
-  }
-
-  const displayName = body.displayName.trim();
-
-  if (displayName.length === 0 || displayName.length > 80) {
-    return { error: "display_name_invalid" };
-  }
-
-  if (typeof body.gender !== "string" || !validGenders.has(body.gender as DbGender)) {
-    return { error: "gender_invalid" };
-  }
-
-  if (!Array.isArray(body.positions)) {
-    return { error: "positions_required" };
-  }
-
-  const positions = Array.from(new Set(body.positions));
-
-  if (
-    positions.length === 0 ||
-    positions.some((position) => typeof position !== "string" || !validPositions.has(position as DbPosition))
-  ) {
-    return { error: "positions_invalid" };
-  }
-
-  if (typeof body.primaryPosition !== "string" || !positions.includes(body.primaryPosition)) {
-    return { error: "primary_position_invalid" };
-  }
-
-  if (!isGeneratedAvatarOption(body.avatar)) {
-    return { error: "avatar_invalid" };
-  }
-
-  return {
-    displayName,
-    gender: body.gender as DbGender,
-    positions: positions as DbPosition[],
-    primaryPosition: body.primaryPosition as DbPosition,
-    avatar: {
-      kind: "generated",
-      style: body.avatar.style,
-      seed: body.avatar.seed,
-    },
-  };
-}
-
 function mapProfile(player: {
   id: string;
   display_name: string;
@@ -165,6 +91,8 @@ function mapProfile(player: {
   avatar_style?: string | null;
   avatar_seed?: string | null;
   player_positions?: Array<{ position: DbPosition; is_primary: boolean }>;
+  temp_unavailable_reason?: "illness_injury" | "travel" | "other" | null;
+  temp_unavailable_note?: string | null;
 }) {
   const positions = player.player_positions ?? [];
 
@@ -184,5 +112,7 @@ function mapProfile(player: {
       position: position.position,
       isPrimary: position.is_primary,
     })),
+    tempUnavailableReason: player.temp_unavailable_reason ?? null,
+    tempUnavailableNote: player.temp_unavailable_note ?? null,
   };
 }

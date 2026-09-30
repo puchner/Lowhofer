@@ -4,6 +4,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { fetchLeagueSource } from "../../api/plannerApi";
 import { LEAGUE_SOURCE_UPDATED_EVENT, LeagueSourceUpdatedDetail } from "../../domain/leagueSourceEvents";
 import { PlayerAvatar } from "../players/PlayerAvatar";
+import { TemporaryUnavailableStatus } from "../players/TemporaryUnavailableStatus";
 import { isPlayer } from "../../domain/playerRoles";
 import { SessionGate } from "../../session/SessionGate";
 import { useSession } from "../../session/sessionStore";
@@ -171,7 +172,14 @@ function SessionControls() {
           <span className="font-semibold uppercase tracking-wide text-neon">
             {selectedAccountIsPlayer ? "Spieler" : "Zugang"}
           </span>
-          <span className="ml-2 font-black text-white">{session.selectedPlayerDisplayName}</span>
+          <span className="ml-2 font-black text-white">
+            {session.selectedPlayerDisplayName}
+          </span>
+          {selectedPlayer?.tempUnavailableReason ? (
+            <div className="mt-1">
+              <TemporaryUnavailableStatus note={selectedPlayer.tempUnavailableNote} reason={selectedPlayer.tempUnavailableReason} variant="header" />
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">

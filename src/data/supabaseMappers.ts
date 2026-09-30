@@ -1,4 +1,4 @@
-import { AvailabilityPoll, AvailabilityStatus, Gender, MatchAvailability, Player, Position } from "../domain/types";
+import { AvailabilityPoll, AvailabilityStatus, Gender, MatchAvailability, Player, Position, TemporaryUnavailabilityReason } from "../domain/types";
 export { berlinDateTimeToIso } from "../domain/berlinDateTime";
 
 export type DbGender = "male" | "female" | "diverse";
@@ -23,6 +23,8 @@ export interface DbPlayerRow {
   avatar_style?: string | null;
   avatar_seed?: string | null;
   avatar_storage_path?: string | null;
+  temp_unavailable_reason?: TemporaryUnavailabilityReason | null;
+  temp_unavailable_note?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -159,6 +161,8 @@ export function mapDbPlayerToPlayer(row: DbPlayerWithPositions): Player {
           seed: row.avatar_seed ?? undefined,
         }
       : undefined,
+    tempUnavailableReason: row.temp_unavailable_reason ?? null,
+    tempUnavailableNote: row.temp_unavailable_note ?? undefined,
   };
 }
 

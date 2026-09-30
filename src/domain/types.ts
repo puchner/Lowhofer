@@ -11,6 +11,8 @@ export enum Gender {
   Male = "male",
 }
 
+export type TemporaryUnavailabilityReason = "illness_injury" | "travel" | "other";
+
 export enum AvailabilityStatus {
   Available = "zugesagt",
   Unavailable = "abgesagt",
@@ -34,6 +36,8 @@ export interface Player {
   primaryPosition?: Position;
   avatar?: PlayerAvatar;
   notes?: string;
+  tempUnavailableReason?: TemporaryUnavailabilityReason | null;
+  tempUnavailableNote?: string;
 }
 
 export interface MatchAvailability {

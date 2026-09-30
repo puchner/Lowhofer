@@ -55,5 +55,19 @@ export const appUpdates: AppUpdate[] = [
     description: "Bei Auswärtsspielen ist die Halle des Gegners jetzt in den Matchdetails verlinkt.",
     publishedAt: "2026-04-23T00:00:00.000Z",
     category: "feature",
-  }
+  },
+  {
+    id: "2026-09-30-player-management",
+    title: "Spielerverwaltung",
+    description: "Admins können Spieler jetzt hinzufügen, alle Profile bearbeiten und Spieler dauerhaft löschen.",
+    publishedAt: "2026-09-30T00:00:00.000Z",
+    category: "feature",
+  },
+  {
+    id: "2026-09-30-longer-absences",
+    title: "Länger raus? Sag’s dem Team.",
+    description: "Verletzung, Reise oder etwas anderes: Längere Auszeiten kannst du jetzt im Profil eintragen. Das Team sieht den Hinweis bei der Spieltagsplanung. Vergiss aber nicht, den Abwesenheitsstatus auch wieder rauszunehmen!",
+    publishedAt: "2026-09-30T01:00:00.000Z",
+    category: "feature",
+  },
 ];

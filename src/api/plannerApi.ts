@@ -1,5 +1,13 @@
 import { LeagueStanding } from "../domain/leagueTypes";
-import { AvailabilityStatus, LeagueFixture, MatchAvailability, MatchDay, Player, Position } from "../domain/types";
+import {
+  AvailabilityStatus,
+  LeagueFixture,
+  MatchAvailability,
+  MatchDay,
+  Player,
+  Position,
+  TemporaryUnavailabilityReason,
+} from "../domain/types";
 import type { CreatePollInput, UpdatePollInput } from "../state/plannerStore";
 
 interface ApiPlayer {
@@ -17,6 +25,8 @@ interface ApiPlayer {
     position: "setter" | "outside" | "middle" | "opposite" | "libero";
     isPrimary: boolean;
   }>;
+  tempUnavailableReason?: TemporaryUnavailabilityReason | null;
+  tempUnavailableNote?: string | null;
 }
 
 const positionByApiValue: Record<ApiPlayer["positions"][number]["position"], Position> = {
@@ -155,5 +165,7 @@ function mapApiPlayer(player: ApiPlayer): Player {
     positions,
     primaryPosition: primaryPosition ? positionByApiValue[primaryPosition.position] : positions[0],
     avatar: player.avatar,
+    tempUnavailableReason: player.tempUnavailableReason ?? null,
+    tempUnavailableNote: player.tempUnavailableNote ?? undefined,
   };
 }

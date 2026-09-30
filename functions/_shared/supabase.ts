@@ -10,6 +10,7 @@ import type {
   DbPlayerRow,
   DbPlayerWithPositions,
 } from "../../src/data/supabaseMappers";
+import type { PlayerProfileInput } from "./playerProfile";
 import { TRAINING_MEMBER_ROLE } from "../../src/domain/playerRoles";
 import { CloudflareEnv, getRequiredEnv } from "./env";
 
@@ -18,7 +19,7 @@ interface TeamSettingsPasswordRow {
 }
 
 const playerSelect =
-  "id,display_name,gender,is_active,is_admin,role,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,created_at,updated_at";
+  "id,display_name,gender,is_active,is_admin,role,sort_order,avatar_kind,avatar_style,avatar_seed,avatar_storage_path,temp_unavailable_reason,temp_unavailable_note,created_at,updated_at";
 const pollWithAppointmentSelect =
   "*,match_appointments!availability_polls_match_appointment_id_fkey(*,matches(*))";
 
@@ -98,6 +99,80 @@ export async function updatePlayerCoreProfile(
   });
 
   return rows[0] ?? null;
+}
+
+export async function createPlayerWithPositions(
+  env: CloudflareEnv,
+  profile: PlayerProfileInput,
+): Promise<DbPlayerWithPositions> {
+  const lastPlayer = await supabaseFetch<Array<{ sort_order: number }>>(
+    env,
+    "/players?select=sort_order&order=sort_order.desc&limit=1",
+  );
+  const nextSortOrder = (lastPlayer[0]?.sort_order ?? 0) + 1;
+  const rows = await supabaseFetch<DbPlayerRow[]>(
+    env,
+    `/players?select=${playerSelect}`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        display_name: profile.displayName,
+        gender: profile.gender,
+        is_active: true,
+        is_admin: false,
+        role: "member",
+        sort_order: nextSortOrder,
+        avatar_kind: profile.avatar.kind,
+        avatar_style: profile.avatar.style,
+        avatar_seed: profile.avatar.seed,
+        avatar_storage_path: null,
+        temp_unavailable_reason: profile.tempUnavailableReason,
+        temp_unavailable_note: profile.tempUnavailableNote,
+      }),
+    },
+  );
+
+  if (!rows[0]) {
+    throw new Error("player_create_failed");
+  }
+
+  try {
+    await replacePlayerPositions(
+      env,
+      rows[0].id,
+      profile.positions.map((position) => ({
+        position,
+        is_primary: position === profile.primaryPosition,
+      })),
+    );
+  } catch (error) {
+    await supabaseFetch<void>(env, `/players?id=eq.${encodeURIComponent(rows[0].id)}`, { method: "DELETE" });
+    throw error;
+  }
+
+  const createdPlayer = await getPlayerWithPositions(env, rows[0].id);
+
+  if (!createdPlayer) {
+    throw new Error("player_create_failed");
+  }
+
+  return createdPlayer;
+}
+
+export async function deletePlayer(env: CloudflareEnv, playerId: string): Promise<void> {
+  await supabaseFetch<void>(env, `/players?id=eq.${encodeURIComponent(playerId)}`, { method: "DELETE" });
+}
+
+export async function countActiveAdmins(env: CloudflareEnv): Promise<number> {
+  const rows = await supabaseFetch<Array<{ id: string }>>(
+    env,
+    "/players?select=id&is_active=eq.true&is_admin=eq.true&role=eq.member",
+  );
+  return rows.length;
 }
 
 export async function replacePlayerPositions(

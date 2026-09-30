@@ -22,11 +22,16 @@ create table if not exists public.players (
   avatar_style text,
   avatar_seed text,
   avatar_storage_path text,
+  temp_unavailable_reason text,
+  temp_unavailable_note text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint players_gender_check check (gender in ('male', 'female', 'diverse')),
   constraint players_role_check check (role in ('member', 'training_member')),
-  constraint players_avatar_kind_check check (avatar_kind in ('generated', 'uploaded'))
+  constraint players_avatar_kind_check check (avatar_kind in ('generated', 'uploaded')),
+  constraint players_temp_unavailable_reason_check check (
+    temp_unavailable_reason is null or temp_unavailable_reason in ('illness_injury', 'travel', 'other')
+  )
 );
 
 create table if not exists public.player_positions (

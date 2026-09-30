@@ -1,5 +1,5 @@
 import { dbPositionToPosition, positionToDbPosition, type DbGender, type DbPosition } from "../data/supabaseMappers";
-import { Gender, Player, PlayerAvatar, Position } from "../domain/types";
+import { Gender, Player, PlayerAvatar, Position, TemporaryUnavailabilityReason } from "../domain/types";
 
 interface ApiProfile {
   id: string;
@@ -10,6 +10,8 @@ interface ApiProfile {
     position: DbPosition;
     isPrimary: boolean;
   }>;
+  tempUnavailableReason?: TemporaryUnavailabilityReason | null;
+  tempUnavailableNote?: string | null;
 }
 
 export interface UpdateProfileInput {
@@ -22,6 +24,8 @@ export interface UpdateProfileInput {
     style: string;
     seed: string;
   };
+  tempUnavailableReason: TemporaryUnavailabilityReason | null;
+  tempUnavailableNote?: string;
 }
 
 export async function fetchProfile(): Promise<Player> {
@@ -39,10 +43,54 @@ export async function updateProfile(input: UpdateProfileInput): Promise<Player> 
       positions: input.positions.map(positionToDbPosition),
       primaryPosition: positionToDbPosition(input.primaryPosition),
       avatar: input.avatar,
+      tempUnavailableReason: input.tempUnavailableReason,
+      tempUnavailableNote: input.tempUnavailableNote ?? null,
     }),
   });
 
   return mapApiProfile(body.profile);
+}
+
+export async function createPlayer(input: UpdateProfileInput): Promise<Player> {
+  const body = await requestJson<{ player: ApiProfile }>("/api/players", {
+    method: "POST",
+    body: JSON.stringify({
+      displayName: input.displayName,
+      gender: input.gender,
+      positions: input.positions.map(positionToDbPosition),
+      primaryPosition: positionToDbPosition(input.primaryPosition),
+      avatar: input.avatar,
+      tempUnavailableReason: input.tempUnavailableReason,
+      tempUnavailableNote: input.tempUnavailableNote ?? null,
+    }),
+  });
+
+  return mapApiProfile(body.player);
+}
+
+export async function fetchPlayer(playerId: string): Promise<Player> {
+  const body = await requestJson<{ player: ApiProfile }>(`/api/players/${encodeURIComponent(playerId)}`);
+  return mapApiProfile(body.player);
+}
+
+export async function updatePlayer(playerId: string, input: UpdateProfileInput): Promise<Player> {
+  const body = await requestJson<{ player: ApiProfile }>(`/api/players/${encodeURIComponent(playerId)}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      displayName: input.displayName,
+      gender: input.gender,
+      positions: input.positions.map(positionToDbPosition),
+      primaryPosition: positionToDbPosition(input.primaryPosition),
+      avatar: input.avatar,
+      tempUnavailableReason: input.tempUnavailableReason,
+      tempUnavailableNote: input.tempUnavailableNote ?? null,
+    }),
+  });
+  return mapApiProfile(body.player);
+}
+
+export async function deletePlayer(playerId: string): Promise<void> {
+  await requestJson(`/api/players/${encodeURIComponent(playerId)}`, { method: "DELETE" });
 }
 
 async function requestJson<T>(url: string, init: RequestInit = {}): Promise<T> {
@@ -76,5 +124,7 @@ function mapApiProfile(profile: ApiProfile): Player {
     positions,
     primaryPosition: primaryPosition ? dbPositionToPosition(primaryPosition.position) : positions[0],
     avatar: profile.avatar,
+    tempUnavailableReason: profile.tempUnavailableReason ?? null,
+    tempUnavailableNote: profile.tempUnavailableNote ?? undefined,
   };
 }
